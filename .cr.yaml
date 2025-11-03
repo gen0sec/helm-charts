@@ -1,0 +1,5 @@
+owner: arxignis
+git-repo: helm-charts
+charts_dir: charts
+pages-branch: gh-pages
+pages-index-path: index.yaml
