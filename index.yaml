@@ -1,3 +1,75 @@
 apiVersion: v1
-entries: {}
-generated: "2025-11-04T00:00:00Z"
+entries:
+  moat:
+  - apiVersion: v2
+    appVersion: 0.0.7
+    created: "2025-11-04T13:13:44.204034597Z"
+    dependencies:
+    - name: valkey
+      repository: https://valkey.io/valkey-helm/
+      version: 0.7.7
+    - name: clamav
+      repository: oci://registry.gitlab.com/xrow-public/helm-clamav/charts
+      version: 1.6.82
+    description: A Helm chart for Moat reverse proxy with security features
+    digest: d9de18cb295ca0ccab8c0f3c3ca9a58589a055d29fa9c0cb570c64ed5c44674a
+    name: moat
+    type: application
+    urls:
+    - https://github.com/arxignis/helm-charts/releases/download/moat-1.0.0/moat-1.0.0.tgz
+    version: 1.0.0
+  moat-operator:
+  - apiVersion: v2
+    appVersion: 1.0.0
+    created: "2025-11-04T13:13:44.367557843Z"
+    description: Helm chart for the Moat Kubernetes operator
+    digest: 27ae29d01b70b7c12e13a72d1c0d60739a8083b9fb0755f7050bbce6092075b5
+    home: https://arxignis.com
+    icon: https://raw.githubusercontent.com/arxignis/helm-charts/main/images/logo.png
+    keywords:
+    - moat
+    - operator
+    - kubernetes
+    - security
+    maintainers:
+    - email: support@arxignis.com
+      name: Arxignis
+    name: moat-operator
+    sources:
+    - https://github.com/arxignis/moat-operator
+    type: application
+    urls:
+    - https://github.com/arxignis/helm-charts/releases/download/moat-operator-1.0.0/moat-operator-1.0.0.tgz
+    version: 1.0.0
+  moat-stack:
+  - apiVersion: v2
+    appVersion: 0.1.0
+    created: "2025-11-04T13:13:44.48959103Z"
+    dependencies:
+    - name: moat
+      repository: file://../moat
+      version: 1.0.0
+    description: Umbrella chart that installs the Moat dataplane together with the
+      Moat operator
+    digest: 2e59b2573b13af7f30a4ff90ca4c21b36fee6ad33c6e8016eec50d395cc65733
+    home: https://arxignis.com
+    icon: https://raw.githubusercontent.com/arxignis/helm-charts/main/images/logo.png
+    keywords:
+    - moat
+    - operator
+    - kubernetes
+    - security
+    - proxy
+    - firewall
+    maintainers:
+    - email: support@arxignis.com
+      name: Arxignis
+    name: moat-stack
+    sources:
+    - https://github.com/arxignis/moat
+    - https://github.com/arxignis/moat-operator
+    type: application
+    urls:
+    - https://github.com/arxignis/helm-charts/releases/download/moat-stack-0.1.2/moat-stack-0.1.2.tgz
+    version: 0.1.2
+generated: "2025-11-04T13:13:44.489601279Z"
