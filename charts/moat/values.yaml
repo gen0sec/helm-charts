@@ -357,4 +357,9 @@ affinity: {}
 
 valkey: {}
 
-clamav: {}
+clamav:
+  image:
+    registry: docker.io
+    repository: clamav/clamav-debian
+    tag: "1.5.1"
+    pullPolicy: IfNotPresent
