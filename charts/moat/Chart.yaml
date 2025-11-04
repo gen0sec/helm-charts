@@ -30,3 +30,4 @@ dependencies:
   - name: clamav
     version: 1.6.82
     repository: oci://registry.gitlab.com/xrow-public/helm-clamav/charts
+
