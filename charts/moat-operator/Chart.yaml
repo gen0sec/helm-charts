@@ -3,7 +3,7 @@ name: moat-operator
 description: Helm chart for the Moat Kubernetes operator
 # Release moat-operator v1.0.0
 type: application
-version: 1.0.0
+version: 1.0.4
 appVersion: "1.0.0"
 home: https://arxignis.com
 icon: https://raw.githubusercontent.com/arxignis/helm-charts/main/images/logo.png
