@@ -22,6 +22,7 @@ jobs:
       - name: Add repo for remote deps (our own pages)
         run: |
           helm repo add arxignis https://arxignis.github.io/helm-charts
+          helm repo add valkey https://valkey.io/valkey-helm/
           helm repo update
 
       - name: Build chart dependencies

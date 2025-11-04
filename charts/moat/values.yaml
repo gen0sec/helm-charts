@@ -354,3 +354,9 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
+
+valkey:
+  enabled: true
+
+clamav:
+  enabled: true

@@ -87,7 +87,7 @@ data:
     # Redis Configuration
     redis:
       # Redis connection URL for ACME cache storage
-      url: "{{ .Values.moat.redis.url }}"
+      url: "{{- if .Values.valkey.enabled -}}redis://{{ .Release.Name }}-valkey:6379{{- else -}}{{ .Values.moat.redis.url }}{{- end }}"
 
       # Namespace prefix for Redis ACME cache entries
       prefix: "{{ .Values.moat.redis.prefix }}"
@@ -137,7 +137,7 @@ data:
       enabled: {{ .Values.moat.contentScanning.enabled }}
 
       # ClamAV server address
-      clamav_server: "{{ .Values.moat.contentScanning.clamavServer }}"
+      clamav_server: "{{- if .Values.clamav.enabled -}}{{ .Release.Name }}-clamav:3310{{- else -}}{{ .Values.moat.contentScanning.clamavServer }}{{- end }}"
 
       # Maximum file size to scan in bytes (10MB)
       max_file_size: {{ int .Values.moat.contentScanning.maxFileSize }}

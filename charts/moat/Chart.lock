@@ -1,0 +1,9 @@
+dependencies:
+- name: valkey
+  repository: https://valkey.io/valkey-helm/
+  version: 0.7.7
+- name: clamav
+  repository: oci://registry.gitlab.com/xrow-public/helm-clamav/charts
+  version: 1.6.82
+digest: sha256:2292a5944532a9ceff7af252202964d656be903ca4983bf88cd2e5adc10e75b3
+generated: "2025-11-03T21:02:12.826707+01:00"
