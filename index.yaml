@@ -1,35 +1,3 @@
 apiVersion: v1
-entries:
-  moat:
-  - apiVersion: v2
-    appVersion: 0.0.7
-    created: "2025-11-04T12:21:06.473819041Z"
-    dependencies:
-    - name: valkey
-      repository: https://valkey.io/valkey-helm/
-      version: 0.7.7
-    - name: clamav
-      repository: oci://registry.gitlab.com/xrow-public/helm-clamav/charts
-      version: 1.6.82
-    description: A Helm chart for Moat reverse proxy with security features
-    digest: 45c04b1accdb62aa676397c856383b12c0e4c75428756d8956a118ba70d0a75c
-    name: moat
-    type: application
-    urls:
-    - https://github.com/arxignis/helm-charts/releases/download/moat-1.0.0/moat-1.0.0.tgz
-    version: 1.0.0
-  moat-operator:
-  - apiVersion: v2
-    appVersion: 1.0.0
-    created: "2025-11-04T12:21:06.692487442Z"
-    description: Helm chart for the Moat Kubernetes operator
-    digest: b59aecd3e8c0f77311fe2f6bc7f224ea21d62a931656a7cd4bf59a441fe49716
-    maintainers:
-    - email: support@arxignis.com
-      name: Arxignis
-    name: moat-operator
-    type: application
-    urls:
-    - https://github.com/arxignis/helm-charts/releases/download/moat-operator-1.0.0/moat-operator-1.0.0.tgz
-    version: 1.0.0
-generated: "2025-11-04T12:21:06.692494294Z"
+entries: {}
+generated: "2025-11-04T00:00:00Z"
