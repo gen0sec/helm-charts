@@ -4,6 +4,9 @@ description: Helm chart for the Moat Kubernetes operator
 type: application
 version: 1.0.0
 appVersion: "1.0.0"
+home: https://arxignis.com
+sources:
+  - https://github.com/arxignis/moat-operator
 keywords:
   - moat
   - operator
