@@ -4,6 +4,11 @@ description: Helm chart for the Moat Kubernetes operator
 type: application
 version: 1.0.0
 appVersion: "1.0.0"
+keywords:
+  - moat
+  - operator
+  - kubernetes
+  - security
 maintainers:
   - name: Arxignis
     email: support@arxignis.com
