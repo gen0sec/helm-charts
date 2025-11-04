@@ -1,0 +1,24 @@
+apiVersion: v2
+name: moat-stack
+description: Umbrella chart that installs the Moat dataplane together with the Moat operator
+type: application
+version: 0.1.2
+appVersion: "0.1.0"
+home: https://arxignis.com
+sources:
+  - https://github.com/arxignis/moat
+  - https://github.com/arxignis/moat-operator
+keywords:
+  - moat
+  - operator
+  - kubernetes
+  - security
+  - proxy
+  - firewall
+dependencies:
+  - name: moat
+    version: 1.0.0
+    repository: "file://../moat"
+maintainers:
+  - name: Arxignis
+    email: support@arxignis.com

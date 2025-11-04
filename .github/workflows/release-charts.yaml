@@ -1,10 +1,10 @@
-name: Release Moat Chart
+name: Release Charts
 
 on:
   push:
     branches: [ main ]
     paths:
-      - 'charts/moat/**'
+      - 'charts/**'
 
 jobs:
   release:
@@ -28,9 +28,11 @@ jobs:
           helm repo add valkey https://valkey.io/valkey-helm/
           helm repo update
 
-      - name: Build moat chart dependencies
+      - name: Build chart dependencies
         run: |
-          helm dependency build charts/moat
+          for chart in charts/*; do
+            [ -f "$chart/Chart.yaml" ] && helm dependency build "$chart" || true
+          done
 
       - name: Run chart-releaser
         uses: helm/chart-releaser-action@v1.6.0

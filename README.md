@@ -2,8 +2,7 @@
 
 <p align="center">
   <a href="https://github.com/arxignis/helm-charts/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-Apache 2-green" alt="License - Apache 2"></a> &nbsp;
-  <a href="https://github.com/arxignis/helm-charts/actions?query=branch%3Amain"><img src="https://github.com/arxignis/helm-charts/actions/workflows/release-moat.yaml/badge.svg" alt="Release Moat"></a> &nbsp;
-  <a href="https://github.com/arxignis/helm-charts/actions?query=branch%3Amain"><img src="https://github.com/arxignis/helm-charts/actions/workflows/release-moat-controller.yaml/badge.svg" alt="Release Moat Controller"></a> &nbsp;
+  <a href="https://github.com/arxignis/helm-charts/actions?query=branch%3Amain"><img src="https://github.com/arxignis/helm-charts/actions/workflows/release-charts.yaml/badge.svg" alt="Release Charts"></a> &nbsp;
   <a href="https://github.com/arxignis/helm-charts/releases"><img src="https://img.shields.io/github/release/arxignis/helm-charts.svg?label=Release" alt="Release"></a> &nbsp;
   <img alt="GitHub Downloads (all assets, all releases)" src="https://img.shields.io/github/downloads/arxignis/helm-charts/total"> &nbsp;
   <a href="https://docs.arxignis.com/"><img alt="Static Badge" src="https://img.shields.io/badge/arxignis-documentation-page?style=flat&link=https%3A%2F%2Fdocs.arxignis.com%2F"></a> &nbsp;
@@ -30,9 +29,12 @@ A Helm chart for Moat reverse proxy with security features.
 - `valkey` - Redis-compatible in-memory data store
 - `clamav` - Antivirus engine
 
-### moat-operator
+### moat-stack
 
-A Helm chart that installs the Moat Kubernetes operator for managing Moat instances.
+Umbrella chart that installs both the Moat dataplane and the Moat Kubernetes operator.
+
+**Dependencies:**
+- `moat` - Moat reverse proxy chart
 
 ## Installation
 
@@ -43,16 +45,20 @@ helm repo add arxignis https://helm.arxignis.com
 helm repo update
 ```
 
-### Install moat
+### Install moat-stack (recommended)
+
+Install both the Moat dataplane and operator together:
+
+```bash
+helm install moat-stack arxignis/moat-stack
+```
+
+### Install moat only
+
+Install just the Moat reverse proxy:
 
 ```bash
 helm install moat arxignis/moat
-```
-
-### Install moat-operator
-
-```bash
-helm install moat-operator arxignis/moat-operator
 ```
 
 ## Usage
@@ -60,7 +66,7 @@ helm install moat-operator arxignis/moat-operator
 See the individual chart directories for detailed configuration options:
 
 - [moat chart values](charts/moat/values.yaml)
-- [moat-operator chart values](charts/moat-operator/values.yaml)
+- [moat-stack chart values](charts/moat-stack/values.yaml)
 
 ## Repository
 
@@ -72,12 +78,9 @@ Charts are automatically published to:
 
 ### Releasing Charts
 
-Charts are automatically released via separate GitHub Actions workflows when changes are pushed to the `main` branch:
+Charts are automatically released via GitHub Actions when changes are pushed to the `main` branch.
 
-- **Moat Chart**: Changes to `charts/moat/**` trigger the `release-moat.yaml` workflow
-- **Moat Controller Chart**: Changes to `charts/moat-controller/**` trigger the `release-moat-controller.yaml` workflow
-
-Each chart has its own independent release workflow, allowing for separate versioning and release cycles. The workflows use [chart-releaser-action](https://github.com/helm/chart-releaser-action) to package and publish charts to the GitHub Pages repository.
+Changes to `charts/**` trigger the `release-charts.yaml` workflow. The workflow uses [chart-releaser-action](https://github.com/helm/chart-releaser-action) to package and publish charts to the GitHub Pages repository.
 
 ### Manual Release
 
