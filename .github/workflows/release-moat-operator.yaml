@@ -24,9 +24,16 @@ jobs:
       - name: Install Helm
         uses: azure/setup-helm@v4
 
-      - name: Build moat-operator chart dependencies
+      - name: Add repositories for dependencies
         run: |
-          helm dependency build charts/moat-operator || true
+          helm repo add valkey https://valkey.io/valkey-helm/
+          helm repo update
+
+      - name: Build chart dependencies
+        run: |
+          for chart in charts/*; do
+            [ -f "$chart/Chart.yaml" ] && helm dependency build "$chart" || true
+          done
 
       - name: Run chart-releaser
         uses: helm/chart-releaser-action@v1.6.0
