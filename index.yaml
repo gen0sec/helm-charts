@@ -141,4 +141,26 @@ entries:
     urls:
     - https://github.com/arxignis/helm-charts/releases/download/moat-stack-0.1.2/moat-stack-0.1.2.tgz
     version: 0.1.2
-generated: "2025-11-04T15:58:15.977470624Z"
+  ssl-storage:
+  - apiVersion: v2
+    appVersion: 0.0.1
+    created: "2025-11-10T10:18:52.335388386Z"
+    description: Helm chart for deploying the SSL Storage ACME/Let's Encrypt certificate
+      manager service
+    digest: ea734e86edd332a728e9626b0a06badad8fe1ed6f57f2309ffa0d2b065e9f46f
+    keywords:
+    - ssl
+    - certificates
+    - acme
+    - letsencrypt
+    maintainers:
+    - email: support@arxignis.com
+      name: Arxignis
+    name: ssl-storage
+    sources:
+    - https://github.com/arxignis/ssl-storage
+    type: application
+    urls:
+    - https://github.com/arxignis/helm-charts/releases/download/ssl-storage-0.1.1/ssl-storage-0.1.1.tgz
+    version: 0.1.1
+generated: "2025-11-10T10:18:52.335406049Z"
