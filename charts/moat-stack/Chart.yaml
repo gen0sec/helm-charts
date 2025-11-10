@@ -3,7 +3,7 @@ name: moat-stack
 description: Umbrella chart that installs the Moat dataplane together with the Moat operator
 # Release moat-stack v0.1.2
 type: application
-version: 0.1.3
+version: 0.1.4
 appVersion: "0.1.0"
 home: https://arxignis.com
 icon: https://raw.githubusercontent.com/arxignis/helm-charts/main/images/logo.png
@@ -19,7 +19,7 @@ keywords:
   - firewall
 dependencies:
   - name: moat
-    version: 1.0.9
+    version: 0.1.2
     repository: "file://../moat"
 maintainers:
   - name: Arxignis
