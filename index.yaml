@@ -2,6 +2,23 @@ apiVersion: v1
 entries:
   moat:
   - apiVersion: v2
+    appVersion: 0.1.4
+    created: "2025-11-11T11:50:23.040388051Z"
+    dependencies:
+    - name: valkey
+      repository: https://valkey.io/valkey-helm/
+      version: 0.7.7
+    - name: clamav
+      repository: oci://registry.gitlab.com/xrow-public/helm-clamav/charts
+      version: 1.6.82
+    description: A Helm chart for Moat reverse proxy with security features
+    digest: dffd70f3bcfb11a72dbce096faa5c47dffae1c03ff29e49c54a445b7f5ce7cfd
+    name: moat
+    type: application
+    urls:
+    - https://github.com/arxignis/helm-charts/releases/download/moat-1.2.1/moat-1.2.1.tgz
+    version: 1.2.1
+  - apiVersion: v2
     appVersion: 0.0.7
     created: "2025-11-10T21:53:20.239699485Z"
     dependencies:
@@ -398,4 +415,4 @@ entries:
     urls:
     - https://github.com/arxignis/helm-charts/releases/download/ssl-storage-0.1.1/ssl-storage-0.1.1.tgz
     version: 0.1.1
-generated: "2025-11-10T21:53:20.410942287Z"
+generated: "2025-11-11T11:50:23.040431031Z"
