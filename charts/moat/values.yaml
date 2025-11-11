@@ -357,6 +357,9 @@ affinity: {}
 
 valkey: {}
 
+clamavIntegration:
+  enabled: true
+
 clamav:
   image:
     registry: docker.io

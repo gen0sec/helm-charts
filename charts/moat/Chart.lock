@@ -5,5 +5,5 @@ dependencies:
 - name: clamav
   repository: oci://registry.gitlab.com/xrow-public/helm-clamav/charts
   version: 1.6.82
-digest: sha256:2292a5944532a9ceff7af252202964d656be903ca4983bf88cd2e5adc10e75b3
-generated: "2025-11-03T21:02:12.826707+01:00"
+digest: sha256:47bdb4ce1c7bb89d0949e9e7a446cc47c219cc6bb5cd8fd67ade77c4a7299bd2
+generated: "2025-11-11T22:02:31.8509239+01:00"

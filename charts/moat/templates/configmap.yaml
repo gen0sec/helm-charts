@@ -137,7 +137,7 @@ data:
       enabled: {{ .Values.moat.contentScanning.enabled }}
 
       # ClamAV server address
-      clamav_server: "{{- if .Values.clamav.enabled -}}{{ .Release.Name }}-clamav:3310{{- else -}}{{ .Values.moat.contentScanning.clamavServer }}{{- end }}"
+      clamav_server: "{{- if .Values.clamavIntegration.enabled -}}{{ .Release.Name }}-clamav:3310{{- else -}}{{ .Values.moat.contentScanning.clamavServer }}{{- end }}"
 
       # Maximum file size to scan in bytes (10MB)
       max_file_size: {{ int .Values.moat.contentScanning.maxFileSize }}
