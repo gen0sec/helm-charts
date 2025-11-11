@@ -185,6 +185,36 @@ entries:
   moat-stack:
   - apiVersion: v2
     appVersion: 0.1.0
+    created: "2025-11-11T11:55:51.425435074Z"
+    dependencies:
+    - name: moat
+      repository: file://../moat
+      version: 1.2.1
+    description: Umbrella chart that installs the Moat dataplane together with the
+      Moat operator
+    digest: e789f2b21003ee06def34ea4b11540c9668b6e65ae5f8c73b1dc8b833004c4d1
+    home: https://arxignis.com
+    icon: https://raw.githubusercontent.com/arxignis/helm-charts/main/images/logo.png
+    keywords:
+    - moat
+    - operator
+    - kubernetes
+    - security
+    - proxy
+    - firewall
+    maintainers:
+    - email: support@arxignis.com
+      name: Arxignis
+    name: moat-stack
+    sources:
+    - https://github.com/arxignis/moat
+    - https://github.com/arxignis/moat-operator
+    type: application
+    urls:
+    - https://github.com/arxignis/helm-charts/releases/download/moat-stack-0.2.1/moat-stack-0.2.1.tgz
+    version: 0.2.1
+  - apiVersion: v2
+    appVersion: 0.1.0
     created: "2025-11-10T21:53:20.41086898Z"
     dependencies:
     - name: moat
@@ -415,4 +445,4 @@ entries:
     urls:
     - https://github.com/arxignis/helm-charts/releases/download/ssl-storage-0.1.1/ssl-storage-0.1.1.tgz
     version: 0.1.1
-generated: "2025-11-11T11:50:23.040431031Z"
+generated: "2025-11-11T11:55:51.425463948Z"
