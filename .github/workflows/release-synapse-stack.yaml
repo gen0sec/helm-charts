@@ -1,10 +1,10 @@
-name: Release Moat Operator Chart
+name: Release Synapse Stack Chart
 
 on:
   push:
     branches: [ main ]
     paths:
-      - 'charts/moat-operator/**'
+      - 'charts/synapse-stack/**'
   workflow_dispatch:
 
 concurrency:
