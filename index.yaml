@@ -466,6 +466,24 @@ entries:
   synapse:
   - apiVersion: v2
     appVersion: 0.3.1
+    created: "2026-01-12T15:46:34.521596702Z"
+    dependencies:
+    - name: valkey
+      repository: https://valkey.io/valkey-helm/
+      version: 0.7.7
+    - condition: clamavIntegration.enabled
+      name: clamav
+      repository: oci://registry.gitlab.com/xrow-public/helm-clamav/charts
+      version: 1.6.82
+    description: A Helm chart for Synapse reverse proxy with security features
+    digest: c2f5ff75e4ea425a2413af6652c9a9e833b5a88fd106596d05c068765728179b
+    name: synapse
+    type: application
+    urls:
+    - https://github.com/gen0sec/helm-charts/releases/download/synapse-0.1.2/synapse-0.1.2.tgz
+    version: 0.1.2
+  - apiVersion: v2
+    appVersion: 0.3.1
     created: "2026-01-12T14:57:30.563227924Z"
     dependencies:
     - name: valkey
@@ -508,6 +526,37 @@ entries:
   synapse-stack:
   - apiVersion: v2
     appVersion: 0.3.1
+    created: "2026-01-12T15:46:34.832396454Z"
+    dependencies:
+    - condition: synapse.enabled
+      name: synapse
+      repository: file://../synapse
+      version: 0.1.2
+    description: Umbrella chart that installs the Synapse dataplane together with
+      the Synapse operator
+    digest: 7fea38d9fffa924c44728802fb2631c9049ffd60d93e4db3432f0fb59f0ba8a5
+    home: https://arxignis.com
+    icon: https://raw.githubusercontent.com/arxignis/helm-charts/main/images/logo.png
+    keywords:
+    - synapse
+    - operator
+    - kubernetes
+    - security
+    - proxy
+    - firewall
+    maintainers:
+    - email: support@arxignis.com
+      name: Arxignis
+    name: synapse-stack
+    sources:
+    - https://github.com/gen0sec/synapse
+    - https://github.com/arxignis/synapse-operator
+    type: application
+    urls:
+    - https://github.com/gen0sec/helm-charts/releases/download/synapse-stack-0.1.2/synapse-stack-0.1.2.tgz
+    version: 0.1.2
+  - apiVersion: v2
+    appVersion: 0.3.1
     created: "2026-01-12T14:57:30.933992104Z"
     dependencies:
     - condition: synapse.enabled
@@ -537,4 +586,4 @@ entries:
     urls:
     - https://github.com/gen0sec/helm-charts/releases/download/synapse-stack-0.1.1/synapse-stack-0.1.1.tgz
     version: 0.1.1
-generated: "2026-01-12T14:57:30.934049491Z"
+generated: "2026-01-12T15:46:34.832463088Z"
