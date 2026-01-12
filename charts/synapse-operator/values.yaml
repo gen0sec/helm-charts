@@ -1,0 +1,29 @@
+global:
+  namespaces:
+    operator: synapse-system
+
+operator:
+  enabled: true
+  createNamespace: true
+  image:
+    repository: ghcr.io/gen0sec/synapse-operator
+    tag: latest
+    pullPolicy: IfNotPresent
+  replicaCount: 1
+  leaderElect: true
+  labelSelector: "app.kubernetes.io/name=synapse"
+  configHashAnnotation: "synapse.gen0sec.com/config-hash"
+  ignoreConfigMapKeys: "upstreams.yaml"
+  ignoreSecretKeys: ""
+  serviceAccount:
+    create: true
+    name: ""
+  rbac:
+    create: true
+  resources:
+    requests:
+      cpu: 5m
+      memory: 32Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
