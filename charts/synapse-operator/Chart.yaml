@@ -1,0 +1,19 @@
+apiVersion: v2
+name: synapse-operator
+description: Helm chart for the Synapse Kubernetes operator
+# Release synapse-operator v1.0.0
+type: application
+version: 1.0.6
+appVersion: "1.0.0"
+home: https://arxignis.com
+icon: https://raw.githubusercontent.com/arxignis/helm-charts/main/images/logo.png
+sources:
+  - https://github.com/arxignis/synapse-operator
+keywords:
+  - synapse
+  - operator
+  - kubernetes
+  - security
+maintainers:
+  - name: Arxignis
+    email: support@arxignis.com

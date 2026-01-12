@@ -2,9 +2,9 @@
 
 <p align="center">
   <a href="https://github.com/arxignis/helm-charts/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-Apache 2-green" alt="License - Apache 2"></a> &nbsp;
-  <a href="https://github.com/arxignis/helm-charts/actions?query=branch%3Amain"><img src="https://github.com/arxignis/helm-charts/actions/workflows/release-moat.yaml/badge.svg" alt="Release Moat"></a> &nbsp;
-  <a href="https://github.com/arxignis/helm-charts/actions?query=branch%3Amain"><img src="https://github.com/arxignis/helm-charts/actions/workflows/release-moat-operator.yaml/badge.svg" alt="Release Moat Operator"></a> &nbsp;
-  <a href="https://github.com/arxignis/helm-charts/actions?query=branch%3Amain"><img src="https://github.com/arxignis/helm-charts/actions/workflows/release-moat-stack.yaml/badge.svg" alt="Release Moat Stack"></a> &nbsp;
+  <a href="https://github.com/arxignis/helm-charts/actions?query=branch%3Amain"><img src="https://github.com/arxignis/helm-charts/actions/workflows/release-synapse.yaml/badge.svg" alt="Release Synapse"></a> &nbsp;
+  <a href="https://github.com/arxignis/helm-charts/actions?query=branch%3Amain"><img src="https://github.com/arxignis/helm-charts/actions/workflows/release-synapse-operator.yaml/badge.svg" alt="Release Synapse Operator"></a> &nbsp;
+  <a href="https://github.com/arxignis/helm-charts/actions?query=branch%3Amain"><img src="https://github.com/arxignis/helm-charts/actions/workflows/release-synapse-stack.yaml/badge.svg" alt="Release Synapse Stack"></a> &nbsp;
   <a href="https://github.com/arxignis/helm-charts/releases"><img src="https://img.shields.io/github/release/arxignis/helm-charts.svg?label=Release" alt="Release"></a> &nbsp;
   <img alt="GitHub Downloads (all assets, all releases)" src="https://img.shields.io/github/downloads/arxignis/helm-charts/total"> &nbsp;
   <a href="https://docs.arxignis.com/"><img alt="Static Badge" src="https://img.shields.io/badge/arxignis-documentation-page?style=flat&link=https%3A%2F%2Fdocs.arxignis.com%2F"></a> &nbsp;
@@ -19,28 +19,28 @@
 
 # Helm Charts
 
-This repository contains Helm charts for deploying Moat and related components.
+This repository contains Helm charts for deploying Synapse and related components.
 
 ## Charts
 
-### moat
+### synapse
 
-A Helm chart for Moat reverse proxy with security features.
+A Helm chart for Synapse reverse proxy with security features.
 
 **Dependencies:**
 - `valkey` - Redis-compatible in-memory data store
 - `clamav` - Antivirus engine
 
-### moat-operator
+### synapse-operator
 
-A Helm chart for the Moat Kubernetes operator.
+A Helm chart for the Synapse Kubernetes operator.
 
-### moat-stack
+### synapse-stack
 
-Umbrella chart that installs both the Moat dataplane and the Moat Kubernetes operator together.
+Umbrella chart that installs both the Synapse dataplane and the Synapse Kubernetes operator together.
 
 **Dependencies:**
-- `moat` - Moat reverse proxy chart
+- `synapse` - Synapse reverse proxy chart
 
 ### ssl-storage
 
@@ -55,42 +55,42 @@ helm repo add arxignis https://helm.arxignis.com
 helm repo update
 ```
 
-### Install moat-stack (recommended)
+### Install synapse-stack (recommended)
 
-Install both the Moat dataplane and operator together:
+Install both the Synapse dataplane and operator together:
 
 ```bash
-helm install moat-stack arxignis/moat-stack --version 0.1.2
+helm install synapse-stack arxignis/synapse-stack --version 0.1.0
 ```
 
-### Install moat only
+### Install synapse only
 
-Install just the Moat reverse proxy:
+Install just the Synapse reverse proxy:
 
 ```bash
-helm install moat arxignis/moat --version 1.0.0
+helm install synapse arxignis/synapse --version 0.1.0
 ```
 
-### Install moat-operator only
+### Install synapse-operator only
 
-Install just the Moat Kubernetes operator:
+Install just the Synapse Kubernetes operator:
 
 ```bash
-helm install moat-operator arxignis/moat-operator --version 1.0.0
+helm install synapse-operator arxignis/synapse-operator --version 1.0.6
 ```
 
 ## Usage
 
 See the individual chart directories for detailed configuration options:
 
-- [moat chart values](charts/moat/values.yaml)
-- [moat-operator chart values](charts/moat-operator/values.yaml)
-- [moat-stack chart values](charts/moat-stack/values.yaml)
+- [synapse chart values](charts/synapse/values.yaml)
+- [synapse-operator chart values](charts/synapse-operator/values.yaml)
+- [synapse-stack chart values](charts/synapse-stack/values.yaml)
 
 ## Repository
 
 Charts are automatically published to:
-- **Repository URL**: `https://helm.arxignis.com/helm-charts`
+- **Repository URL**: `https://helm.arxignis.com`
 - **GitHub Repository**: `https://github.com/arxignis/helm-charts`
 
 ## Development
@@ -99,9 +99,9 @@ Charts are automatically published to:
 
 Charts are automatically released via separate GitHub Actions workflows when changes are pushed to the `main` branch:
 
-- **Moat Chart**: Changes to `charts/moat/**` trigger the `release-moat.yaml` workflow
-- **Moat Operator Chart**: Changes to `charts/moat-operator/**` trigger the `release-moat-operator.yaml` workflow
-- **Moat Stack Chart**: Changes to `charts/moat-stack/**` trigger the `release-moat-stack.yaml` workflow
+- **Synapse Chart**: Changes to `charts/synapse/**` trigger the `release-synapse.yaml` workflow
+- **Synapse Operator Chart**: Changes to `charts/synapse-operator/**` trigger the `release-synapse-operator.yaml` workflow
+- **Synapse Stack Chart**: Changes to `charts/synapse-stack/**` trigger the `release-synapse-stack.yaml` workflow
 - **SSL Storage Chart**: Changes to `charts/ssl-storage/**` trigger the `release-ssl-storage.yaml` workflow
 
 Each workflow can also be triggered manually via workflow_dispatch. The workflows use [chart-releaser-action](https://github.com/helm/chart-releaser-action) to package and publish charts to the GitHub Pages repository.
@@ -111,10 +111,9 @@ Each workflow can also be triggered manually via workflow_dispatch. The workflow
 You can also use the Makefile for manual releases:
 
 ```bash
-make release VERSION=x.y.z MOAT_VERSION=x.y.z
+make release VERSION=x.y.z
 ```
 
 ## License
 
 See the LICENSE file in the root of this repository.
-

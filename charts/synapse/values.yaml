@@ -1,0 +1,229 @@
+# Default values for synapse
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image:
+  repository: ghcr.io/gen0sec/synapse
+  pullPolicy: IfNotPresent
+  tag: ""
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+# Command-line arguments passed to the synapse binary.
+# By default we point to the rendered ConfigMap at /etc/synapse/config.yaml.
+args:
+  - "--config"
+  - "/etc/synapse/config.yaml"
+
+serviceAccount:
+  create: true
+  automount: true
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+podLabels: {}
+
+# Pod security context for BPF/XDP access
+podSecurityContext:
+  runAsUser: 0
+  runAsGroup: 0
+  runAsNonRoot: false
+  fsGroup: 0
+
+# Container security context
+securityContext:
+  privileged: true
+  capabilities:
+    add:
+      - SYS_ADMIN
+      - NET_ADMIN
+      - BPF
+      - SYS_RESOURCE
+    drop:
+      - ALL
+
+# Use host networking when attaching XDP to a host interface.
+hostNetwork: false
+# Optional override when hostNetwork is true (defaults to ClusterFirstWithHostNet).
+dnsPolicy: ""
+
+service:
+  type: ClusterIP
+  httpPort: 80
+  httpsPort: 443
+  healthPort: 8080
+
+# Synapse configuration files rendered into the ConfigMap.
+# Note: YAML config has higher priority than env vars, so leave values empty
+# if you plan to override via environment variables.
+synapse:
+  config: |
+    mode: "proxy"
+    redis:
+      url: "redis://127.0.0.1/0"
+      prefix: "ax:synapse"
+    network:
+      iface: "eth0"
+      ifaces: []
+      disable_xdp: false
+      ip_version: "both"
+    arxignis:
+      base_url: "https://api.gen0sec.com/v1"
+      log_sending_enabled: true
+      include_response_body: true
+      max_body_size: 1048576
+      captcha:
+        site_key: null
+        secret_key: null
+        jwt_secret: null
+        provider: "hcaptcha"
+        token_ttl: 7200
+        cache_ttl: 300
+    geoip:
+      country:
+        url: ""
+        path: "/var/lib/synapse"
+        headers: null
+      asn:
+        url: ""
+        path: "/var/lib/synapse"
+        headers: null
+      city:
+        url: ""
+        path: "/var/lib/synapse"
+        headers: null
+      refresh_secs: 28800
+    content_scanning:
+      enabled: false
+      clamav_server: "localhost:3310"
+      max_file_size: 10485760
+      scan_content_types:
+        - "text/html"
+        - "application/x-www-form-urlencoded"
+        - "multipart/form-data"
+        - "application/json"
+        - "text/plain"
+      skip_extensions: []
+      scan_expression: "http.request.method eq \"POST\" or http.request.method eq \"PUT\""
+    logging:
+      level: "info"
+    bpf_stats:
+      enabled: true
+      log_interval_secs: 60
+      enable_dropped_ip_events: true
+      dropped_ip_events_interval_secs: 30
+    tcp_fingerprint:
+      enabled: true
+      log_interval_secs: 60
+      enable_fingerprint_events: true
+      fingerprint_events_interval_secs: 30
+      min_packet_count: 3
+      min_connection_duration_secs: 1
+    daemon:
+      enabled: false
+      pid_file: "/var/run/synapse.pid"
+      working_directory: "/"
+      stdout: "/var/log/synapse.out"
+      stderr: "/var/log/synapse.err"
+      user: null
+      group: null
+      chown_pid_file: true
+    pingora:
+      proxy_address_http: "0.0.0.0:80"
+      proxy_address_tls: null
+      proxy_certificates: null
+      proxy_tls_grade: "medium"
+      default_certificate: null
+      upstreams_conf: "/etc/synapse/upstreams.yaml"
+      config_address: "0.0.0.0:3000"
+      config_api_enabled: false
+      master_key: "00000000-0000-0000-0000-000000000000"
+      log_level: "info"
+      healthcheck_method: "HEAD"
+      healthcheck_interval: 2
+      proxy_protocol:
+        enabled: false
+        timeout_ms: 1000
+    acme:
+      enabled: false
+      port: 9180
+      email: null
+      storage_path: "/var/lib/synapse/acme"
+      storage_type: null
+      development: false
+      redis_url: null
+
+  upstreams: |
+    provider: "file"
+    config:
+      sticky_sessions: false
+    upstreams:
+      example.com:
+        paths:
+          "/":
+            servers:
+              - "127.0.0.1:8081"
+
+# Environment variable overrides (lowest priority; use only for settings not in config.yaml)
+env: {}
+
+resources: {}
+
+livenessProbe:
+  httpGet:
+    path: /health
+    port: 8080
+  initialDelaySeconds: 30
+  periodSeconds: 10
+readinessProbe:
+  httpGet:
+    path: /health
+    port: 8080
+  initialDelaySeconds: 5
+  periodSeconds: 5
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+
+volumes: []
+# - name: bpf
+#   hostPath:
+#     path: /sys/fs/bpf
+#     type: DirectoryOrCreate
+# - name: modules
+#   hostPath:
+#     path: /lib/modules
+#     type: Directory
+
+volumeMounts: []
+# - name: bpf
+#   mountPath: /sys/fs/bpf
+# - name: modules
+#   mountPath: /lib/modules
+#   readOnly: true
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+valkey: {}
+
+clamavIntegration:
+  enabled: true
+
+clamav:
+  image:
+    registry: docker.io
+    repository: clamav/clamav-debian
+    tag: "1.5.1"
+    pullPolicy: IfNotPresent
