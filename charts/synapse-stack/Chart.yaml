@@ -1,9 +1,9 @@
 apiVersion: v2
 name: synapse-stack
 description: Umbrella chart that installs the Synapse dataplane together with the Synapse operator
-# Release synapse-stack v0.1.0
+# Release synapse-stack v0.1.2
 type: application
-version: 0.1.1
+version: 0.1.2
 appVersion: "0.3.1"
 home: https://arxignis.com
 icon: https://raw.githubusercontent.com/arxignis/helm-charts/main/images/logo.png
@@ -19,7 +19,7 @@ keywords:
   - firewall
 dependencies:
   - name: synapse
-    version: 0.1.1
+    version: 0.1.2
     repository: "file://../synapse"
     condition: synapse.enabled
 maintainers:

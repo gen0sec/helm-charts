@@ -58,6 +58,20 @@ service:
   httpsPort: 443
   healthPort: 8080
 
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts: []
+  tls: []
+
+httpRoute:
+  enabled: false
+  annotations: {}
+  parentRefs: []
+  hostnames: []
+  rules: []
+
 # Synapse configuration files rendered into the ConfigMap.
 # Note: YAML config has higher priority than env vars, so leave values empty
 # if you plan to override via environment variables.
