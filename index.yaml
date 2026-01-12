@@ -463,4 +463,78 @@ entries:
     urls:
     - https://github.com/arxignis/helm-charts/releases/download/ssl-storage-0.1.1/ssl-storage-0.1.1.tgz
     version: 0.1.1
-generated: "2025-11-11T21:15:22.263389125Z"
+  synapse:
+  - apiVersion: v2
+    appVersion: 0.3.1
+    created: "2026-01-12T14:57:30.563227924Z"
+    dependencies:
+    - name: valkey
+      repository: https://valkey.io/valkey-helm/
+      version: 0.7.7
+    - condition: clamavIntegration.enabled
+      name: clamav
+      repository: oci://registry.gitlab.com/xrow-public/helm-clamav/charts
+      version: 1.6.82
+    description: A Helm chart for Synapse reverse proxy with security features
+    digest: 3f855025961fe407478e074c69dcd60a624432758b0130546285b6d2edb521ea
+    name: synapse
+    type: application
+    urls:
+    - https://github.com/gen0sec/helm-charts/releases/download/synapse-0.1.1/synapse-0.1.1.tgz
+    version: 0.1.1
+  synapse-operator:
+  - apiVersion: v2
+    appVersion: 1.0.0
+    created: "2026-01-12T14:57:30.737260154Z"
+    description: Helm chart for the Synapse Kubernetes operator
+    digest: b23d0d26008d46239698e16fb4e0d728f685c1f953a7bf62b08cfea0b12be7b1
+    home: https://arxignis.com
+    icon: https://raw.githubusercontent.com/arxignis/helm-charts/main/images/logo.png
+    keywords:
+    - synapse
+    - operator
+    - kubernetes
+    - security
+    maintainers:
+    - email: support@arxignis.com
+      name: Arxignis
+    name: synapse-operator
+    sources:
+    - https://github.com/arxignis/synapse-operator
+    type: application
+    urls:
+    - https://github.com/gen0sec/helm-charts/releases/download/synapse-operator-1.0.7/synapse-operator-1.0.7.tgz
+    version: 1.0.7
+  synapse-stack:
+  - apiVersion: v2
+    appVersion: 0.3.1
+    created: "2026-01-12T14:57:30.933992104Z"
+    dependencies:
+    - condition: synapse.enabled
+      name: synapse
+      repository: file://../synapse
+      version: 0.1.1
+    description: Umbrella chart that installs the Synapse dataplane together with
+      the Synapse operator
+    digest: 0fff5870da130f5c40ecbdbe18d54e9e95fd4986a476584f8fd02496fa3a2da3
+    home: https://arxignis.com
+    icon: https://raw.githubusercontent.com/arxignis/helm-charts/main/images/logo.png
+    keywords:
+    - synapse
+    - operator
+    - kubernetes
+    - security
+    - proxy
+    - firewall
+    maintainers:
+    - email: support@arxignis.com
+      name: Arxignis
+    name: synapse-stack
+    sources:
+    - https://github.com/gen0sec/synapse
+    - https://github.com/arxignis/synapse-operator
+    type: application
+    urls:
+    - https://github.com/gen0sec/helm-charts/releases/download/synapse-stack-0.1.1/synapse-stack-0.1.1.tgz
+    version: 0.1.1
+generated: "2026-01-12T14:57:30.934049491Z"
