@@ -3,7 +3,7 @@ name: synapse-operator
 description: Helm chart for the Synapse Kubernetes operator
 # Release synapse-operator v1.0.0
 type: application
-version: 1.0.6
+version: 1.0.7
 appVersion: "1.0.0"
 home: https://arxignis.com
 icon: https://raw.githubusercontent.com/arxignis/helm-charts/main/images/logo.png
