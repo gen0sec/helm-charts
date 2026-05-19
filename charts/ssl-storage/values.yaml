@@ -1,7 +1,7 @@
 replicaCount: 1
 
 image:
-  repository: ghcr.io/arxignis/ssl-storage
+  repository: ghcr.io/gen0sec/ssl-storage
   tag: "0.0.1"
   pullPolicy: IfNotPresent
 

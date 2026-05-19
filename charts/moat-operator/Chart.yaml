@@ -5,16 +5,16 @@ description: Helm chart for the Moat Kubernetes operator
 type: application
 version: 1.0.5
 appVersion: "1.0.0"
-home: https://arxignis.com
+home: https://gen0sec.com
 icon: https://raw.githubusercontent.com/gen0sec/helm-charts/main/images/logo.png
 sources:
-  - https://github.com/arxignis/moat-operator
+  - https://github.com/gen0sec/moat-operator
 keywords:
   - moat
   - operator
   - kubernetes
   - security
 maintainers:
-  - name: Arxignis
-    email: support@arxignis.com
+  - name: Gen0Sec
+    email: support@gen0sec.com
 

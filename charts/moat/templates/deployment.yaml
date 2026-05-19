@@ -157,37 +157,37 @@ spec:
             - name: AX_NETWORK_DISABLE_XDP
               value: "{{ .Values.env.network.disableXdp }}"
             {{- end }}
-            {{- if .Values.env.arxignis.apiKey }}
-            - name: AX_ARXIGNIS_API_KEY
-              value: "{{ .Values.env.arxignis.apiKey }}"
+            {{- if .Values.env.gen0sec.apiKey }}
+            - name: AX_GEN0SEC_API_KEY
+              value: "{{ .Values.env.gen0sec.apiKey }}"
             {{- end }}
-            {{- if .Values.env.arxignis.baseUrl }}
-            - name: AX_ARXIGNIS_BASE_URL
-              value: "{{ .Values.env.arxignis.baseUrl }}"
+            {{- if .Values.env.gen0sec.baseUrl }}
+            - name: AX_GEN0SEC_BASE_URL
+              value: "{{ .Values.env.gen0sec.baseUrl }}"
             {{- end }}
-            {{- if .Values.env.arxignis.captchaSiteKey }}
+            {{- if .Values.env.gen0sec.captchaSiteKey }}
             - name: AX_CAPTCHA_SITE_KEY
-              value: "{{ .Values.env.arxignis.captchaSiteKey }}"
+              value: "{{ .Values.env.gen0sec.captchaSiteKey }}"
             {{- end }}
-            {{- if .Values.env.arxignis.captchaSecretKey }}
+            {{- if .Values.env.gen0sec.captchaSecretKey }}
             - name: AX_CAPTCHA_SECRET_KEY
-              value: "{{ .Values.env.arxignis.captchaSecretKey }}"
+              value: "{{ .Values.env.gen0sec.captchaSecretKey }}"
             {{- end }}
-            {{- if .Values.env.arxignis.captchaJwtSecret }}
+            {{- if .Values.env.gen0sec.captchaJwtSecret }}
             - name: AX_CAPTCHA_JWT_SECRET
-              value: "{{ .Values.env.arxignis.captchaJwtSecret }}"
+              value: "{{ .Values.env.gen0sec.captchaJwtSecret }}"
             {{- end }}
-            {{- if .Values.env.arxignis.captchaProvider }}
+            {{- if .Values.env.gen0sec.captchaProvider }}
             - name: AX_CAPTCHA_PROVIDER
-              value: "{{ .Values.env.arxignis.captchaProvider }}"
+              value: "{{ .Values.env.gen0sec.captchaProvider }}"
             {{- end }}
-            {{- if .Values.env.arxignis.captchaTokenTtl }}
+            {{- if .Values.env.gen0sec.captchaTokenTtl }}
             - name: AX_CAPTCHA_TOKEN_TTL
-              value: "{{ .Values.env.arxignis.captchaTokenTtl }}"
+              value: "{{ .Values.env.gen0sec.captchaTokenTtl }}"
             {{- end }}
-            {{- if .Values.env.arxignis.captchaCacheTtl }}
+            {{- if .Values.env.gen0sec.captchaCacheTtl }}
             - name: AX_CAPTCHA_CACHE_TTL
-              value: "{{ .Values.env.arxignis.captchaCacheTtl }}"
+              value: "{{ .Values.env.gen0sec.captchaCacheTtl }}"
             {{- end }}
             {{- if .Values.env.logging.level }}
             - name: AX_LOGGING_LEVEL

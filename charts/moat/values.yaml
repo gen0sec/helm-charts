@@ -7,7 +7,7 @@ replicaCount: 1
 
 # This sets the container image more information can be found here: https://kubernetes.io/docs/concepts/containers/images/
 image:
-  repository: ghcr.io/arxignis/moat
+  repository: ghcr.io/gen0sec/moat
   # This sets the pull policy for images.
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
@@ -149,12 +149,12 @@ moat:
     # Disable XDP packet filtering (run without BPF/XDP)
     disableXdp: false
 
-  # Arxignis Configuration
-  arxignis:
-    # API key for Arxignis service
+  # Gen0Sec Configuration
+  gen0sec:
+    # API key for Gen0Sec service
     apiKey: ""
-    # Base URL for Arxignis API
-    baseUrl: "https://api.arxignis.com/v1"
+    # Base URL for Gen0Sec API
+    baseUrl: "https://api.gen0sec.com/v1"
     # Captcha Configuration
     captcha:
       # Captcha site key for security verification
@@ -233,8 +233,8 @@ env:
     iface: null
     ifaces: null
     disableXdp: null
-  # Arxignis environment variables
-  arxignis:
+  # Gen0Sec environment variables
+  gen0sec:
     apiKey: null
     baseUrl: null
     captchaSiteKey: null

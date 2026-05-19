@@ -5,11 +5,11 @@ description: Umbrella chart that installs the Moat dataplane together with the M
 type: application
 version: 0.2.1
 appVersion: "0.1.0"
-home: https://arxignis.com
+home: https://gen0sec.com
 icon: https://raw.githubusercontent.com/gen0sec/helm-charts/main/images/logo.png
 sources:
-  - https://github.com/arxignis/moat
-  - https://github.com/arxignis/moat-operator
+  - https://github.com/gen0sec/moat
+  - https://github.com/gen0sec/moat-operator
 keywords:
   - moat
   - operator
@@ -22,6 +22,6 @@ dependencies:
     version: 1.2.1
     repository: "file://../moat"
 maintainers:
-  - name: Arxignis
-    email: support@arxignis.com
+  - name: Gen0Sec
+    email: support@gen0sec.com
 
