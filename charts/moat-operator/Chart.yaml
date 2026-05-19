@@ -6,7 +6,7 @@ type: application
 version: 1.0.5
 appVersion: "1.0.0"
 home: https://arxignis.com
-icon: https://raw.githubusercontent.com/arxignis/helm-charts/main/images/logo.png
+icon: https://raw.githubusercontent.com/gen0sec/helm-charts/main/images/logo.png
 sources:
   - https://github.com/arxignis/moat-operator
 keywords:
