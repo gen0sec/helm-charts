@@ -5,6 +5,10 @@ metadata:
   labels:
     {{- include "synapse.labels" . | nindent 4 }}
 spec:
+  {{- with .Values.updateStrategy }}
+  strategy:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
   {{- end }}
@@ -37,6 +41,9 @@ spec:
       dnsPolicy: {{ default "ClusterFirstWithHostNet" .Values.dnsPolicy }}
       {{- else if .Values.dnsPolicy }}
       dnsPolicy: {{ .Values.dnsPolicy }}
+      {{- end }}
+      {{- if .Values.hostPID }}
+      hostPID: true
       {{- end }}
       containers:
         - name: {{ .Chart.Name }}
