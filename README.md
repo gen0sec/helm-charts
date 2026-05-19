@@ -1,4 +1,4 @@
-![Arxignis logo](./images/logo.png)
+![Gen0Sec logo](./images/logo.png)
 
 <p align="center">
   <a href="https://github.com/arxignis/helm-charts/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-Apache 2-green" alt="License - Apache 2"></a> &nbsp;
