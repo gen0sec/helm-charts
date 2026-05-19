@@ -86,7 +86,7 @@ synapse:
       ifaces: []
       disable_xdp: false
       ip_version: "both"
-    arxignis:
+    gen0sec:
       base_url: "https://api.gen0sec.com/v1"
       log_sending_enabled: true
       include_response_body: true

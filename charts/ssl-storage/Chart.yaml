@@ -10,7 +10,7 @@ keywords:
   - acme
   - letsencrypt
 sources:
-  - https://github.com/arxignis/ssl-storage
+  - https://github.com/gen0sec/ssl-storage
 maintainers:
-  - name: Arxignis
-    email: support@arxignis.com
+  - name: Gen0Sec
+    email: support@gen0sec.com

@@ -5,11 +5,11 @@ description: Umbrella chart that installs the Synapse dataplane together with th
 type: application
 version: 0.1.2
 appVersion: "0.3.1"
-home: https://arxignis.com
+home: https://gen0sec.com
 icon: https://raw.githubusercontent.com/gen0sec/helm-charts/main/images/logo.png
 sources:
   - https://github.com/gen0sec/synapse
-  - https://github.com/arxignis/synapse-operator
+  - https://github.com/gen0sec/synapse-operator
 keywords:
   - synapse
   - operator
@@ -23,5 +23,5 @@ dependencies:
     repository: "file://../synapse"
     condition: synapse.enabled
 maintainers:
-  - name: Arxignis
-    email: support@arxignis.com
+  - name: Gen0Sec
+    email: support@gen0sec.com

@@ -6,7 +6,7 @@ operator:
   enabled: true
   createNamespace: true
   image:
-    repository: ghcr.io/arxignis/moat-operator
+    repository: ghcr.io/gen0sec/moat-operator
     tag: latest
     pullPolicy: IfNotPresent
   replicaCount: 1

@@ -103,33 +103,33 @@ data:
       # Disable XDP packet filtering (run without BPF/XDP)
       disable_xdp: {{ .Values.moat.network.disableXdp }}
 
-    # Arxignis Configuration
-    arxignis:
-      # API key for Arxignis service
-      api_key: "{{ .Values.moat.arxignis.apiKey }}"
+    # Gen0Sec Configuration
+    gen0sec:
+      # API key for Gen0Sec service
+      api_key: "{{ .Values.moat.gen0sec.apiKey }}"
 
-      # Base URL for Arxignis API
-      base_url: "{{ .Values.moat.arxignis.baseUrl }}"
+      # Base URL for Gen0Sec API
+      base_url: "{{ .Values.moat.gen0sec.baseUrl }}"
 
       # Captcha Configuration
       captcha:
         # Captcha site key for security verification
-        site_key: {{ if .Values.moat.arxignis.captcha.siteKey }}{{ .Values.moat.arxignis.captcha.siteKey }}{{ else }}null{{ end }}
+        site_key: {{ if .Values.moat.gen0sec.captcha.siteKey }}{{ .Values.moat.gen0sec.captcha.siteKey }}{{ else }}null{{ end }}
 
         # Captcha secret key for security verification
-        secret_key: {{ if .Values.moat.arxignis.captcha.secretKey }}{{ .Values.moat.arxignis.captcha.secretKey }}{{ else }}null{{ end }}
+        secret_key: {{ if .Values.moat.gen0sec.captcha.secretKey }}{{ .Values.moat.gen0sec.captcha.secretKey }}{{ else }}null{{ end }}
 
         # JWT secret key for captcha token signing
-        jwt_secret: {{ if .Values.moat.arxignis.captcha.jwtSecret }}{{ .Values.moat.arxignis.captcha.jwtSecret }}{{ else }}null{{ end }}
+        jwt_secret: {{ if .Values.moat.gen0sec.captcha.jwtSecret }}{{ .Values.moat.gen0sec.captcha.jwtSecret }}{{ else }}null{{ end }}
 
         # Captcha provider: hcaptcha, recaptcha, turnstile
-        provider: "{{ .Values.moat.arxignis.captcha.provider }}"
+        provider: "{{ .Values.moat.gen0sec.captcha.provider }}"
 
         # Captcha token TTL in seconds
-        token_ttl: {{ .Values.moat.arxignis.captcha.tokenTtl }}
+        token_ttl: {{ .Values.moat.gen0sec.captcha.tokenTtl }}
 
         # Captcha validation cache TTL in seconds
-        cache_ttl: {{ .Values.moat.arxignis.captcha.cacheTtl }}
+        cache_ttl: {{ .Values.moat.gen0sec.captcha.cacheTtl }}
 
     # Content Scanning Configuration
     content_scanning:
