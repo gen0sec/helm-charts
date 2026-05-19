@@ -1,119 +1,129 @@
-![Gen0Sec logo](./images/logo.png)
-
 <p align="center">
-  <a href="https://github.com/gen0sec/helm-charts/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-Apache 2-green" alt="License - Apache 2"></a> &nbsp;
-  <a href="https://github.com/gen0sec/helm-charts/actions?query=branch%3Amain"><img src="https://github.com/gen0sec/helm-charts/actions/workflows/release-synapse.yaml/badge.svg" alt="Release Synapse"></a> &nbsp;
-  <a href="https://github.com/gen0sec/helm-charts/actions?query=branch%3Amain"><img src="https://github.com/gen0sec/helm-charts/actions/workflows/release-synapse-operator.yaml/badge.svg" alt="Release Synapse Operator"></a> &nbsp;
-  <a href="https://github.com/gen0sec/helm-charts/actions?query=branch%3Amain"><img src="https://github.com/gen0sec/helm-charts/actions/workflows/release-synapse-stack.yaml/badge.svg" alt="Release Synapse Stack"></a> &nbsp;
-  <a href="https://github.com/gen0sec/helm-charts/releases"><img src="https://img.shields.io/github/release/gen0sec/helm-charts.svg?label=Release" alt="Release"></a> &nbsp;
-  <img alt="GitHub Downloads (all assets, all releases)" src="https://img.shields.io/github/downloads/gen0sec/helm-charts/total"> &nbsp;
-  <a href="https://docs.gen0sec.com/"><img alt="Static Badge" src="https://img.shields.io/badge/gen0sec-documentation-page?style=flat&link=https%3A%2F%2Fdocs.gen0sec.com%2F"></a> &nbsp;
-  <a href="https://discord.gg/jzsW5Q6s9q"><img src="https://img.shields.io/discord/1377189913849757726?label=Discord" alt="Discord"></a> &nbsp;
-  <a href="https://x.com/gen0sec"><img src="https://img.shields.io/twitter/follow/gen0sec?style=flat" alt="X (formerly Twitter) Follow" /> </a>
+  <img src="./images/logo.png" alt="Gen0Sec" width="320">
 </p>
 
-# Community
-[![Join us on Discord](https://img.shields.io/badge/Join%20Us%20on-Discord-5865F2?logo=discord&logoColor=white)](https://discord.gg/jzsW5Q6s9q)
-[![Substack](https://img.shields.io/badge/Substack-FF6719?logo=substack&logoColor=fff)](https://gen0sec.substack.com/)
+<p align="center">
+  <a href="https://github.com/gen0sec/helm-charts"><img src="https://img.shields.io/badge/License-Apache_2.0-green" alt="License - Apache 2.0"></a> &nbsp;
+  <a href="https://github.com/gen0sec/helm-charts/actions?query=branch%3Amain"><img src="https://github.com/gen0sec/helm-charts/actions/workflows/release-synapse-stack.yaml/badge.svg" alt="Release Synapse Stack"></a> &nbsp;
+  <a href="https://github.com/gen0sec/helm-charts/releases"><img src="https://img.shields.io/github/release/gen0sec/helm-charts.svg?label=Release" alt="Release"></a> &nbsp;
+  <a href="https://docs.gen0sec.com/"><img alt="Documentation" src="https://img.shields.io/badge/gen0sec-documentation-page?style=flat&link=https%3A%2F%2Fdocs.gen0sec.com%2F"></a> &nbsp;
+  <a href="https://discord.gg/jzsW5Q6s9q"><img src="https://img.shields.io/discord/1377189913849757726?label=Discord" alt="Discord"></a> &nbsp;
+  <a href="https://x.com/gen0sec"><img src="https://img.shields.io/twitter/follow/gen0sec?style=flat" alt="X (formerly Twitter) Follow" /></a>
+</p>
 
+<p align="center">
+  <a href="https://discord.gg/jzsW5Q6s9q"><img src="https://img.shields.io/badge/Join%20Us%20on-Discord-5865F2?logo=discord&logoColor=white" alt="Join us on Discord"></a>
+  <a href="https://gen0sec.substack.com/"><img src="https://img.shields.io/badge/Substack-FF6719?logo=substack&logoColor=fff" alt="Substack"></a>
+</p>
 
-# Helm Charts
+---
 
-This repository contains Helm charts for deploying Synapse and related components.
+## Gen0Sec Helm Charts
+
+Helm charts for deploying the **Synapse** dataplane and its **Kubernetes operator**. The recommended entry point is the `synapse-stack` umbrella chart, which installs the proxy and the operator together.
+
+> Requires **Helm 3** and a conformant **Kubernetes** cluster. Published to `https://helm.gen0sec.com`.
+
+---
 
 ## Charts
 
-### synapse
+| Chart | Version | App | Purpose |
+|---|---|---|---|
+| [`synapse-stack`](charts/synapse-stack) | 0.1.2 | 0.3.1 | **Umbrella (recommended)** — the `synapse` dataplane + the operator in one release |
+| [`synapse`](charts/synapse) | 0.1.2 | 0.3.1 | Synapse reverse proxy / dataplane. Depends on `valkey`; optional `clamav` (`clamavIntegration.enabled`) |
+| [`synapse-operator`](charts/synapse-operator) | 1.0.7 | 1.0.0 | The Synapse Kubernetes operator (config-sync controller) |
+| [`ssl-storage`](charts/ssl-storage) | 0.1.1 | 0.0.1 | ACME / Let's Encrypt certificate manager service |
+| `moat`, `moat-operator`, `moat-stack` | — | — | **Legacy** — pre-rebrand equivalents of the `synapse*` charts; prefer the `synapse*` charts |
 
-A Helm chart for Synapse reverse proxy with security features.
+---
 
-**Dependencies:**
-- `valkey` - Redis-compatible in-memory data store
-- `clamav` - Antivirus engine
-
-### synapse-operator
-
-A Helm chart for the Synapse Kubernetes operator.
-
-### synapse-stack
-
-Umbrella chart that installs both the Synapse dataplane and the Synapse Kubernetes operator together.
-
-**Dependencies:**
-- `synapse` - Synapse reverse proxy chart
-
-### ssl-storage
-
-Helm chart for deploying the SSL Storage ACME/Let's Encrypt certificate management service.
-
-## Installation
-
-### Add the Helm repository
+## Quick start
 
 ```bash
 helm repo add gen0sec https://helm.gen0sec.com
 helm repo update
+helm search repo gen0sec        # list available charts + versions
 ```
 
-### Install synapse-stack (recommended)
-
-Install both the Synapse dataplane and operator together:
+**Recommended — dataplane + operator together:**
 
 ```bash
-helm install synapse-stack gen0sec/synapse-stack --version 0.1.0
+helm install synapse-stack gen0sec/synapse-stack -n synapse --create-namespace
 ```
 
-### Install synapse only
-
-Install just the Synapse reverse proxy:
+**Individual charts:**
 
 ```bash
-helm install synapse gen0sec/synapse --version 0.1.0
+helm install synapse          gen0sec/synapse          -n synapse        --create-namespace
+helm install synapse-operator gen0sec/synapse-operator -n synapse-system --create-namespace
 ```
 
-### Install synapse-operator only
+---
 
-Install just the Synapse Kubernetes operator:
+## What the operator does
 
-```bash
-helm install synapse-operator gen0sec/synapse-operator --version 1.0.6
-```
+The `synapse-operator` chart deploys the operator as a config-sync controller (its default mode, [source](https://github.com/gen0sec/synapse-operator)):
 
-## Usage
+- Watches **ConfigMaps and Secrets** matching a label selector (default `app.kubernetes.io/name=synapse`).
+- Hashes their combined data and stamps the hash onto the Synapse workload under the `synapse.gen0sec.com/config-hash` annotation.
+- A changed hash bumps the pod template, so Kubernetes **rolls the pods to pick up new config** — no manual restarts.
 
-See the individual chart directories for detailed configuration options:
+The chart wires these operator flags from `values.yaml`:
 
-- [synapse chart values](charts/synapse/values.yaml)
-- [synapse-operator chart values](charts/synapse-operator/values.yaml)
-- [synapse-stack chart values](charts/synapse-stack/values.yaml)
+| Value | Operator flag | Default |
+|---|---|---|
+| `operator.leaderElect` | `--leader-elect` | `true` |
+| `operator.labelSelector` | `--label-selector` | `app.kubernetes.io/name=synapse` |
+| `operator.configHashAnnotation` | `--config-hash-annotation` | `synapse.gen0sec.com/config-hash` |
+| `operator.ignoreConfigMapKeys` | `--ignore-configmap-keys` | `upstreams.yaml` |
+| `operator.ignoreSecretKeys` | `--ignore-secret-keys` | _(empty)_ |
 
-## Repository
+> The operator binary also supports an Ingress + Gateway API mode (`--ingress-mode`); this chart does **not** enable it (config-sync mode only).
 
-Charts are automatically published to:
-- **Repository URL**: `https://helm.gen0sec.com`
-- **GitHub Repository**: `https://github.com/gen0sec/helm-charts`
+---
 
-## Development
+## Configuration highlights
 
-### Releasing Charts
+| Value | Chart | Notes |
+|---|---|---|
+| `synapse.gen0sec.base_url` | synapse | Gen0Sec API base URL (default `https://api.gen0sec.com/v1`) |
+| `synapse.gen0sec.apiKey` | synapse | API key (rendered into a Secret / `AX_GEN0SEC_API_KEY`) |
+| `clamavIntegration.enabled` | synapse | Pulls in the `clamav` subchart for content scanning |
+| `operator.image.repository` / `tag` | synapse-operator | `ghcr.io/gen0sec/synapse-operator:latest` by default |
 
-Charts are automatically released via separate GitHub Actions workflows when changes are pushed to the `main` branch:
+See each chart's `values.yaml` for the full set:
+[`synapse`](charts/synapse/values.yaml) ·
+[`synapse-operator`](charts/synapse-operator/values.yaml) ·
+[`synapse-stack`](charts/synapse-stack/values.yaml)
 
-- **Synapse Chart**: Changes to `charts/synapse/**` trigger the `release-synapse.yaml` workflow
-- **Synapse Operator Chart**: Changes to `charts/synapse-operator/**` trigger the `release-synapse-operator.yaml` workflow
-- **Synapse Stack Chart**: Changes to `charts/synapse-stack/**` trigger the `release-synapse-stack.yaml` workflow
-- **SSL Storage Chart**: Changes to `charts/ssl-storage/**` trigger the `release-ssl-storage.yaml` workflow
+---
 
-Each workflow can also be triggered manually via workflow_dispatch. The workflows use [chart-releaser-action](https://github.com/helm/chart-releaser-action) to package and publish charts to the GitHub Pages repository.
+## Releases
 
-### Manual Release
+Charts are published to GitHub Pages (`https://helm.gen0sec.com`) by per-chart GitHub Actions workflows ([chart-releaser](https://github.com/helm/chart-releaser-action), config in `.cr.yaml`). A workflow runs when its chart directory changes on `main`, or via manual `workflow_dispatch`:
 
-You can also use the Makefile for manual releases:
+| Workflow | Triggers on |
+|---|---|
+| `release-synapse.yaml` | `charts/synapse/**` |
+| `release-synapse-operator.yaml` | `charts/synapse-operator/**` |
+| `release-synapse-stack.yaml` | `charts/synapse-stack/**` |
+| `release-ssl-storage.yaml` | `charts/ssl-storage/**` |
 
-```bash
-make release VERSION=x.y.z
-```
+To cut a release, bump the chart's `version` in its `Chart.yaml` and merge to `main`.
+
+---
+
+## Documentation
+
+| | |
+|---|---|
+| [Gen0Sec Docs](https://docs.gen0sec.com/) | Product documentation and guides |
+| [synapse](https://github.com/gen0sec/synapse) | The Synapse dataplane this chart deploys |
+| [synapse-operator](https://github.com/gen0sec/synapse-operator) | The operator source and full flag reference |
+
+---
 
 ## License
 
-See the LICENSE file in the root of this repository.
+These charts are distributed under the **Apache-2.0** license. _(Note: no `LICENSE` file is currently committed to this repository — see [gen0sec/synapse-operator](https://github.com/gen0sec/synapse-operator/blob/main/LICENSE) for the canonical text.)_
