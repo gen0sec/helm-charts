@@ -19,7 +19,7 @@ keywords:
   - firewall
 dependencies:
   - name: moat
-    version: 1.2.1
+    version: 1.2.2
     repository: "file://../moat"
 maintainers:
   - name: Gen0Sec
