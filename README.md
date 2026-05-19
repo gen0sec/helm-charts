@@ -33,7 +33,6 @@ Helm charts for deploying the **Synapse** dataplane and its **Kubernetes operato
 | [`synapse-stack`](charts/synapse-stack) | 0.1.2 | 0.3.1 | **Umbrella (recommended)** — the `synapse` dataplane + the operator in one release |
 | [`synapse`](charts/synapse) | 0.1.2 | 0.3.1 | Synapse reverse proxy / dataplane. Depends on `valkey`; optional `clamav` (`clamavIntegration.enabled`) |
 | [`synapse-operator`](charts/synapse-operator) | 1.0.7 | 1.0.0 | The Synapse Kubernetes operator (config-sync controller) |
-| `moat`, `moat-operator`, `moat-stack` | — | — | **Legacy** — pre-rebrand equivalents of the `synapse*` charts; prefer the `synapse*` charts |
 
 ---
 
