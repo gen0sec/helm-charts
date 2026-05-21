@@ -3,8 +3,30 @@ global:
     synapse: synapse
     operator: synapse-system
 
-synapse:
+# Two aliased instances of the `synapse` subchart (see Chart.yaml).
+# `nameOverride` sets app.kubernetes.io/name (the per-workload
+# disambiguator, since app.kubernetes.io/instance == release name is
+# shared); `fullnameOverride` forces the bare resource/pod name so pods
+# are `synapse-proxy-*` / `synapse-agent-*` (NOT `<release>-synapse-*`).
+# clamav/valkey are unused here (content_scanning + redis off in the
+# rendered config) and gated off so aliasing doesn't double them.
+proxy:
   enabled: true
+  nameOverride: synapse-proxy
+  fullnameOverride: synapse-proxy
+  clamavIntegration:
+    enabled: false
+  valkey:
+    enabled: false
+
+agent:
+  enabled: false
+  nameOverride: synapse-agent
+  fullnameOverride: synapse-agent
+  clamavIntegration:
+    enabled: false
+  valkey:
+    enabled: false
 
 operator:
   enabled: true
@@ -15,7 +37,10 @@ operator:
     pullPolicy: IfNotPresent
   replicaCount: 1
   leaderElect: true
-  labelSelector: "app.kubernetes.io/name=synapse"
+  # Set-based: both workloads' name labels differ (synapse-proxy /
+  # synapse-agent) so the operator must match either, or it silently
+  # stops config-hash rolling BOTH (it filters List by this selector).
+  labelSelector: "app.kubernetes.io/name in (synapse-proxy,synapse-agent)"
   configHashAnnotation: "synapse.gen0sec.com/config-hash"
   ignoreConfigMapKeys: "upstreams.yaml"
   ignoreSecretKeys: ""
