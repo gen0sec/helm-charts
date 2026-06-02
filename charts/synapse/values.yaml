@@ -220,6 +220,18 @@ volumes: []
 volumeMounts: []
 # - name: bpf
 #   mountPath: /sys/fs/bpf
+
+# Additional sidecar containers to run alongside synapse in the same pod.
+# Used to inject the synapse-operator running in --ingress-mode, which
+# renders Ingress/HTTPRoute resources into a shared upstreams.yaml that
+# synapse hot-reloads via SIGHUP. The list is rendered verbatim into the
+# pod template's `containers:` array.
+extraContainers: []
+
+# Share the PID namespace across containers in the pod. Required when an
+# operator sidecar is used in --ingress-mode so it can send SIGHUP to the
+# co-located synapse process (`--reload-process-name synapse`).
+shareProcessNamespace: false
 # - name: modules
 #   mountPath: /lib/modules
 #   readOnly: true
