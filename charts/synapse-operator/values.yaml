@@ -7,7 +7,7 @@ operator:
   createNamespace: true
   image:
     repository: ghcr.io/gen0sec/synapse-operator
-    tag: latest
+    tag: "0.1.2"
     pullPolicy: IfNotPresent
   replicaCount: 1
   leaderElect: true
