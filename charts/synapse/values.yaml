@@ -219,7 +219,10 @@ synapse:
               - "127.0.0.1:8081"
 
 # Environment variable overrides (lowest priority; use only for settings not in config.yaml)
-env: {}
+# SYNAPSE_LOG_FORMAT=json is the chart default so every workload (proxy + agent)
+# emits structured JSON console logs; override per-workload (e.g. proxy.env) to change.
+env:
+  SYNAPSE_LOG_FORMAT: json
 
 resources: {}
 
