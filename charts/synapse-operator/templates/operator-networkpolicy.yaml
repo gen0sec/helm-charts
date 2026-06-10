@@ -1,0 +1,38 @@
+{{- if and .Values.operator.enabled .Values.operator.networkPolicy.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "synapse-operator.fullname" . }}
+  namespace: {{ .Values.global.namespaces.operator }}
+  labels:
+    {{- include "synapse-operator.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "synapse-operator.selectorLabels" . | nindent 6 }}
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # Always allow probes from the kubelet (same-node) — restrict by
+    # port not by source since kubelets don't have stable pod selectors.
+    - ports:
+        - port: healthz
+          protocol: TCP
+    # Metrics: opens by default to anyone with the configured selector
+    # (defaults to nothing, which means metrics ingress is effectively
+    # closed unless callers populate `metricsIngress.from`).
+    - ports:
+        - port: metrics
+          protocol: TCP
+      {{- with .Values.operator.networkPolicy.metricsIngress.from }}
+      from:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+  # Unrestricted egress — controller-runtime needs the apiserver, the
+  # Lease backend, and (in ingress-mode) cluster DNS for Service
+  # lookups. Lockdown would need a dedicated apiserver+kube-dns rule
+  # set per environment; punt to consumers.
+  egress:
+    - {}
+{{- end }}

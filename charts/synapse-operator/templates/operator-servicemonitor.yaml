@@ -1,0 +1,43 @@
+{{/*
+ServiceMonitor — only renders when:
+1. operator.serviceMonitor.enabled is true, AND
+2. the metrics Service is enabled, AND
+3. the cluster has the monitoring.coreos.com/v1 CRDs installed
+   (otherwise helm template still passes but `kubectl apply` errors;
+   the `.Capabilities.APIVersions.Has` check avoids that on install).
+*/}}
+{{- if and .Values.operator.enabled
+            .Values.operator.serviceMonitor.enabled
+            .Values.operator.service.enabled
+            (.Capabilities.APIVersions.Has "monitoring.coreos.com/v1") -}}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "synapse-operator.fullname" . }}
+  namespace: {{ default .Values.global.namespaces.operator .Values.operator.serviceMonitor.namespace }}
+  labels:
+    {{- include "synapse-operator.labels" . | nindent 4 }}
+    {{- with .Values.operator.serviceMonitor.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  namespaceSelector:
+    matchNames:
+      - {{ .Values.global.namespaces.operator }}
+  selector:
+    matchLabels:
+      {{- include "synapse-operator.selectorLabels" . | nindent 6 }}
+  endpoints:
+    - port: metrics
+      interval: {{ .Values.operator.serviceMonitor.interval }}
+      scrapeTimeout: {{ .Values.operator.serviceMonitor.scrapeTimeout }}
+      path: /metrics
+      {{- with .Values.operator.serviceMonitor.relabelings }}
+      relabelings:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.operator.serviceMonitor.metricRelabelings }}
+      metricRelabelings:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}

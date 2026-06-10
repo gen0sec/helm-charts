@@ -1,7 +1,11 @@
+# Unified namespace for the synapse stack: dataplane (proxy + agent),
+# operator, and the rendered upstreams ConfigMap all land in the same
+# place. Older deployments split these across `synapse-system` /
+# `ingress-synapse` / `synapse` — pick `synapse-os` for greenfield.
 global:
   namespaces:
-    synapse: synapse
-    operator: synapse-system
+    synapse: synapse-os
+    operator: synapse-os
 
 # Two aliased instances of the `synapse` subchart (see Chart.yaml).
 # `nameOverride` sets app.kubernetes.io/name (the per-workload

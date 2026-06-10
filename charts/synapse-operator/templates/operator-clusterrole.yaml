@@ -2,13 +2,30 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: synapse-operator
+  name: {{ include "synapse-operator.fullname" . }}
+  labels:
+    {{- include "synapse-operator.labels" . | nindent 4 }}
 rules:
   - apiGroups: [""]
     resources: ["configmaps"]
-    verbs: ["get", "list", "watch"]
+    # Ingress-mode writes the rendered upstreams ConfigMap; the
+    # UpstreamsResolver writes `<source>-resolved` siblings. Both
+    # need create/update/patch on top of the read verbs.
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
   - apiGroups: [""]
     resources: ["secrets"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["services"]
+    # IngressReconciler resolves Service backends → ClusterIPs when
+    # `--resolve-backend-cluster-ips` is set; UpstreamsResolver also
+    # walks Services to substitute FQDNs.
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["ingresses"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["ingressclasses"]
     verbs: ["get", "list", "watch"]
   - apiGroups: ["apps"]
     resources: ["deployments"]

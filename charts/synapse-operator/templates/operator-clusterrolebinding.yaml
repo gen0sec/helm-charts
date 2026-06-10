@@ -2,13 +2,52 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: synapse-operator
+  name: {{ include "synapse-operator.fullname" . }}
+  labels:
+    {{- include "synapse-operator.labels" . | nindent 4 }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: synapse-operator
+  name: {{ include "synapse-operator.fullname" . }}
 subjects:
   - kind: ServiceAccount
-    name: {{ default "synapse-operator" .Values.operator.serviceAccount.name }}
+    name: {{ include "synapse-operator.serviceAccountName" . }}
+    namespace: {{ .Values.global.namespaces.operator }}
+---
+# Namespace-scoped Role for the leader-election Lease. ClusterRole-only
+# would force the SA to have cluster-wide Lease write access, which is
+# more than the controller actually needs.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ include "synapse-operator.fullname" . }}-leader-election
+  namespace: {{ default .Values.global.namespaces.operator .Values.operator.leaderElectionNamespace }}
+  labels:
+    {{- include "synapse-operator.labels" . | nindent 4 }}
+rules:
+  - apiGroups: ["coordination.k8s.io"]
+    resources: ["leases"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["create", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "synapse-operator.fullname" . }}-leader-election
+  namespace: {{ default .Values.global.namespaces.operator .Values.operator.leaderElectionNamespace }}
+  labels:
+    {{- include "synapse-operator.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ include "synapse-operator.fullname" . }}-leader-election
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "synapse-operator.serviceAccountName" . }}
     namespace: {{ .Values.global.namespaces.operator }}
 {{- end }}

@@ -1,0 +1,33 @@
+{{ include "synapse-operator.fullname" . }} {{ .Chart.AppVersion }} installed.
+
+Operator namespace:   {{ .Values.global.namespaces.operator }}
+Watched namespaces:   {{ if .Values.operator.watchNamespace }}{{ .Values.operator.watchNamespace }}{{ else }}<all>{{ end }}
+Pod selector:         {{ .Values.operator.labelSelector }}
+Leader election:      {{ if .Values.operator.leaderElect }}enabled{{ else }}disabled{{ end }}{{ if .Values.operator.leaderElectionNamespace }} (lease ns: {{ .Values.operator.leaderElectionNamespace }}){{ end }}
+
+{{- if .Values.operator.ingressMode }}
+
+Ingress mode: ON
+  ingressClass:            {{ .Values.operator.ingressClass }}
+  upstreamsOutConfigMap:   {{ .Values.operator.upstreamsOutConfigMap | default "<unset — required!>" }}
+  resolveClusterIPs:       {{ .Values.operator.resolveBackendClusterIPs }}
+  upstreamsResolver:       {{ .Values.operator.upstreamsResolver }}
+{{- end }}
+
+Watch the operator:
+  kubectl -n {{ .Values.global.namespaces.operator }} logs -f deploy/{{ include "synapse-operator.fullname" . }}
+  kubectl -n {{ .Values.global.namespaces.operator }} rollout status deploy/{{ include "synapse-operator.fullname" . }}
+
+{{- if .Values.operator.service.enabled }}
+
+Metrics:
+  kubectl -n {{ .Values.global.namespaces.operator }} port-forward svc/{{ include "synapse-operator.fullname" . }}-metrics {{ .Values.operator.service.port }}:{{ .Values.operator.service.port }}
+  curl http://localhost:{{ .Values.operator.service.port }}/metrics
+{{- end }}
+
+{{- if eq (.Values.operator.replicaCount | int) 1 }}
+
+Note: replicaCount=1 — leader election runs but there is no failover
+candidate. For HA, bump operator.replicaCount and (if not already) keep
+operator.pdb.create or rely on the auto-enable when replicas > 1.
+{{- end }}

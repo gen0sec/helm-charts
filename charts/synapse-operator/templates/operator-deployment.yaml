@@ -2,31 +2,65 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: synapse-operator
+  name: {{ include "synapse-operator.fullname" . }}
   namespace: {{ .Values.global.namespaces.operator }}
   labels:
-    app.kubernetes.io/name: synapse-operator
-    app.kubernetes.io/component: controller
+    {{- include "synapse-operator.labels" . | nindent 4 }}
+  {{- with .Values.operator.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
   replicas: {{ .Values.operator.replicaCount }}
+  strategy:
+    {{- toYaml .Values.operator.strategy | nindent 4 }}
+  revisionHistoryLimit: {{ .Values.operator.revisionHistoryLimit }}
   selector:
     matchLabels:
-      app.kubernetes.io/name: synapse-operator
-      app.kubernetes.io/component: controller
+      {{- include "synapse-operator.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: synapse-operator
-        app.kubernetes.io/component: controller
+        {{- include "synapse-operator.labels" . | nindent 8 }}
+        {{- with .Values.operator.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.operator.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
     spec:
-      serviceAccountName: {{ default "synapse-operator" .Values.operator.serviceAccount.name }}
+      serviceAccountName: {{ include "synapse-operator.serviceAccountName" . }}
+      {{- with .Values.operator.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.operator.priorityClassName }}
+      priorityClassName: {{ . }}
+      {{- end }}
+      automountServiceAccountToken: true
+      terminationGracePeriodSeconds: {{ .Values.operator.terminationGracePeriodSeconds }}
+      securityContext:
+        {{- toYaml .Values.operator.podSecurityContext | nindent 8 }}
       containers:
         - name: manager
-          image: "{{ .Values.operator.image.repository }}:{{ .Values.operator.image.tag }}"
+          image: "{{ .Values.operator.image.repository }}:{{ .Values.operator.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.operator.image.pullPolicy }}
           args:
             {{- if .Values.operator.leaderElect }}
             - --leader-elect
+            {{- end }}
+            {{- with .Values.operator.leaderElectionNamespace }}
+            - --leader-election-namespace={{ . }}
+            {{- end }}
+            {{- if .Values.operator.metricsBindAddress }}
+            - --metrics-bind-address={{ .Values.operator.metricsBindAddress }}
+            {{- end }}
+            {{- if .Values.operator.healthProbeBindAddress }}
+            - --health-probe-bind-address={{ .Values.operator.healthProbeBindAddress }}
+            {{- end }}
+            {{- with .Values.operator.watchNamespace }}
+            - --namespace={{ . }}
             {{- end }}
             {{- if .Values.operator.labelSelector }}
             - --label-selector={{ .Values.operator.labelSelector }}
@@ -40,23 +74,80 @@ spec:
             {{- if .Values.operator.ignoreSecretKeys }}
             - --ignore-secret-keys={{ .Values.operator.ignoreSecretKeys }}
             {{- end }}
+            {{- if .Values.operator.ingressMode }}
+            - --ingress-mode
+            {{- end }}
+            {{- if .Values.operator.ingressClass }}
+            - --ingress-class={{ .Values.operator.ingressClass }}
+            {{- end }}
+            {{- if .Values.operator.upstreamsOutConfigMap }}
+            - --upstreams-out-configmap={{ .Values.operator.upstreamsOutConfigMap }}
+            {{- end }}
+            {{- if .Values.operator.resolveBackendClusterIPs }}
+            - --resolve-backend-cluster-ips
+            {{- end }}
+            {{- if .Values.operator.upstreamsResolver }}
+            - --upstreams-resolver
+            {{- end }}
+            {{- with .Values.operator.extraArgs }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          env:
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            {{- with .Values.operator.env }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
           ports:
-            - containerPort: 8080
+            - containerPort: {{ .Values.operator.ports.metrics }}
               name: metrics
-            - containerPort: 8081
+              protocol: TCP
+            - containerPort: {{ .Values.operator.ports.healthz }}
               name: healthz
+              protocol: TCP
           livenessProbe:
-            httpGet:
-              path: /healthz
-              port: 8081
-            initialDelaySeconds: 15
-            periodSeconds: 20
+            {{- toYaml .Values.operator.livenessProbe | nindent 12 }}
           readinessProbe:
-            httpGet:
-              path: /readyz
-              port: 8081
-            initialDelaySeconds: 5
-            periodSeconds: 10
+            {{- toYaml .Values.operator.readinessProbe | nindent 12 }}
           resources:
             {{- toYaml .Values.operator.resources | nindent 12 }}
+          securityContext:
+            {{- toYaml .Values.operator.securityContext | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            {{- with .Values.operator.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+      volumes:
+        # readOnlyRootFilesystem requires /tmp to be writable elsewhere
+        # (controller-runtime writes a workspace file during leader
+        # election bootstrap). An emptyDir keeps the rootfs sealed.
+        - name: tmp
+          emptyDir: {}
+        {{- with .Values.operator.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.operator.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.operator.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.operator.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.operator.topologySpreadConstraints }}
+      topologySpreadConstraints:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
 {{- end }}

@@ -1,0 +1,22 @@
+{{- if and .Values.operator.enabled .Values.operator.service.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "synapse-operator.fullname" . }}-metrics
+  namespace: {{ .Values.global.namespaces.operator }}
+  labels:
+    {{- include "synapse-operator.labels" . | nindent 4 }}
+  {{- with .Values.operator.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.operator.service.type }}
+  ports:
+    - name: metrics
+      port: {{ .Values.operator.service.port }}
+      targetPort: metrics
+      protocol: TCP
+  selector:
+    {{- include "synapse-operator.selectorLabels" . | nindent 4 }}
+{{- end }}

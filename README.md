@@ -54,7 +54,7 @@ helm install synapse-stack gen0sec/synapse-stack -n synapse --create-namespace
 
 ```bash
 helm install synapse          gen0sec/synapse          -n synapse        --create-namespace
-helm install synapse-operator gen0sec/synapse-operator -n synapse-system --create-namespace
+helm install synapse-operator gen0sec/synapse-operator -n synapse-os --create-namespace
 ```
 
 ---
