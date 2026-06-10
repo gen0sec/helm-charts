@@ -1,0 +1,25 @@
+{{/*
+PodDisruptionBudget — explicit opt-in via `operator.pdb.create=true`,
+OR auto-enabled when replicaCount > 1. Single-replica deploys can't
+honour a PDB (eviction would always violate it), so we leave the
+default off and only render when there's room for HA semantics.
+*/}}
+{{- $pdbEnabled := or .Values.operator.pdb.create (gt (.Values.operator.replicaCount | int) 1) -}}
+{{- if and .Values.operator.enabled $pdbEnabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "synapse-operator.fullname" . }}
+  namespace: {{ .Values.global.namespaces.operator }}
+  labels:
+    {{- include "synapse-operator.labels" . | nindent 4 }}
+spec:
+  {{- if .Values.operator.pdb.maxUnavailable }}
+  maxUnavailable: {{ .Values.operator.pdb.maxUnavailable }}
+  {{- else }}
+  minAvailable: {{ .Values.operator.pdb.minAvailable }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "synapse-operator.selectorLabels" . | nindent 6 }}
+{{- end }}

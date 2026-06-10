@@ -2,7 +2,15 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
+# Workload kind: "Deployment" (default) or "DaemonSet".
+# DaemonSet is intended for the agent role (one pod per node, XDP on host NIC);
+# `replicaCount`, `autoscaling`, and `strategy` are ignored when kind=DaemonSet.
+kind: Deployment
+
 replicaCount: 1
+
+# DaemonSet rollout strategy (only honoured when kind=DaemonSet).
+updateStrategy: {}
 
 image:
   repository: ghcr.io/gen0sec/synapse

@@ -4,5 +4,5 @@ kind: Namespace
 metadata:
   name: {{ .Values.global.namespaces.operator }}
   labels:
-    app.kubernetes.io/name: synapse-operator
+    {{- include "synapse-operator.labels" . | nindent 4 }}
 {{- end }}

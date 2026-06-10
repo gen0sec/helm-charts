@@ -1,16 +1,24 @@
+{{- $kind := default "Deployment" .Values.kind -}}
 apiVersion: apps/v1
-kind: Deployment
+kind: {{ $kind }}
 metadata:
   name: {{ include "synapse.fullname" . }}
   labels:
     {{- include "synapse.labels" . | nindent 4 }}
 spec:
+  {{- if eq $kind "DaemonSet" }}
+  {{- with .Values.updateStrategy }}
+  updateStrategy:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- else }}
   {{- with .Values.updateStrategy }}
   strategy:
     {{- toYaml . | nindent 4 }}
   {{- end }}
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
+  {{- end }}
   {{- end }}
   selector:
     matchLabels:
