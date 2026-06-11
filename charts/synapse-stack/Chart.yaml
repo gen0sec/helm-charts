@@ -1,7 +1,7 @@
 apiVersion: v2
 name: synapse-stack
 description: Umbrella chart that installs the Synapse dataplane together with the Synapse operator
-# Release synapse-stack v0.1.2
+# Release synapse-stack v0.1.5
 type: application
 version: 0.1.5
 appVersion: "0.7.0"
@@ -23,12 +23,12 @@ dependencies:
   #   proxy  → synapse-proxy (TLS passthrough / L7 / Tier-2 terminate)
   #   agent  → synapse-agent (XDP transparent observe; edge only)
   - name: synapse
-    version: 0.1.4
+    version: 0.2.0
     repository: "file://../synapse"
     alias: proxy
     condition: proxy.enabled
   - name: synapse
-    version: 0.1.4
+    version: 0.2.0
     repository: "file://../synapse"
     alias: agent
     condition: agent.enabled
