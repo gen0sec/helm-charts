@@ -95,6 +95,13 @@ operator:
   # `synapse.gen0sec.com/home-net` annotation, overrides auto-discovery.
   netvarsResolver: false
 
+  # Exclude the hot-reloadable thalamus IDS fields (address_vars/enforce_block/
+  # rule_paths/port_vars/flow_timeout_secs/max_flows) from the config-hash, so a
+  # change to ONLY those does NOT roll the workload — the agent hot-reloads them
+  # in process. Other config.yaml changes still roll. Only enable once all
+  # agents run a synapse image that hot-reloads these fields (r32+).
+  idsHotReloadHashExclude: false
+
   # Extra raw args appended to the manager invocation. Use for
   # debug/profile flags not yet exposed individually here.
   extraArgs: []

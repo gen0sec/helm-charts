@@ -61,6 +61,10 @@ operator:
   # never bans an internal source IP. A manual HOME_NET in the config or
   # the `synapse.gen0sec.com/home-net` annotation overrides auto-discovery.
   netvarsResolver: false
+  # Exclude hot-reloadable IDS fields from the config-hash so HOME_NET/
+  # enforce_block/rules changes don't roll the agent (it hot-reloads them).
+  # Only enable once all agents run a hot-reload-capable synapse image (r32+).
+  idsHotReloadHashExclude: false
   # Extra raw args appended to the manager invocation.
   extraArgs: []
   serviceAccount:
