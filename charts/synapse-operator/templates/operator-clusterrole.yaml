@@ -21,6 +21,11 @@ rules:
     # `--resolve-backend-cluster-ips` is set; UpstreamsResolver also
     # walks Services to substitute FQDNs.
     verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["nodes"]
+    # NetVarsResolver (--netvars-resolver) reads Node IPs + PodCIDRs to
+    # auto-fill ids.address_vars.HOME_NET/EXTERNAL_NET.
+    verbs: ["get", "list", "watch"]
   - apiGroups: ["networking.k8s.io"]
     resources: ["ingresses"]
     verbs: ["get", "list", "watch"]

@@ -4,6 +4,13 @@ metadata:
   name: {{ include "synapse.fullname" . }}
   labels:
     {{- include "synapse.labels" . | nindent 4 }}
+    {{- with .Values.configMapExtraLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- with .Values.configMapExtraAnnotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 data:
   config.yaml: |
 {{ .Values.synapse.config | nindent 4 }}

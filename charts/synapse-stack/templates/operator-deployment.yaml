@@ -40,6 +40,15 @@ spec:
             {{- if .Values.operator.ignoreSecretKeys }}
             - --ignore-secret-keys={{ .Values.operator.ignoreSecretKeys }}
             {{- end }}
+            {{- if .Values.operator.upstreamsResolver }}
+            - --upstreams-resolver
+            {{- end }}
+            {{- if .Values.operator.netvarsResolver }}
+            - --netvars-resolver
+            {{- end }}
+            {{- with .Values.operator.extraArgs }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
           ports:
             - containerPort: 8080
               name: metrics
