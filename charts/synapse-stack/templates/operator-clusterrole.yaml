@@ -6,9 +6,21 @@ metadata:
 rules:
   - apiGroups: [""]
     resources: ["configmaps"]
-    verbs: ["get", "list", "watch"]
+    # UpstreamsResolver writes `<source>-resolved` siblings; NetVarsResolver
+    # rewrites the agent config CM in place. Both need write verbs.
+    verbs: ["get", "list", "watch", "create", "update", "patch"]
   - apiGroups: [""]
     resources: ["secrets"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["nodes"]
+    # NetVarsResolver (--netvars-resolver) reads Node IPs + PodCIDRs to
+    # auto-fill ids.address_vars.HOME_NET/EXTERNAL_NET.
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["services"]
+    # NetVarsResolver also collects LoadBalancer Service VIPs into HOME_NET
+    # (a source-rewriting edge LB makes the agent see the LB IP as source).
     verbs: ["get", "list", "watch"]
   - apiGroups: ["apps"]
     resources: ["deployments"]

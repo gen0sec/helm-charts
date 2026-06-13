@@ -27,6 +27,10 @@ agent:
   enabled: false
   nameOverride: synapse-agent
   fullnameOverride: synapse-agent
+  # Mark the agent config CM so the operator's NetVarsResolver fills the
+  # IDS HOME_NET/EXTERNAL_NET (requires operator.netvarsResolver: true).
+  configMapExtraLabels:
+    synapse.gen0sec.com/resolve-netvars: "true"
   clamavIntegration:
     enabled: false
   valkey:
@@ -48,6 +52,17 @@ operator:
   configHashAnnotation: "synapse.gen0sec.com/config-hash"
   ignoreConfigMapKeys: "upstreams.yaml"
   ignoreSecretKeys: ""
+  # Enable the UpstreamsResolver — substitutes Service FQDNs to ClusterIPs
+  # in ConfigMaps labelled `synapse.gen0sec.com/resolve-upstreams=true`.
+  upstreamsResolver: false
+  # Enable the NetVarsResolver — fills IDS HOME_NET/EXTERNAL_NET in agent
+  # config ConfigMaps labelled `synapse.gen0sec.com/resolve-netvars=true`
+  # from Node IPs + PodCIDRs + RFC1918 supernets, so inline IDS blocking
+  # never bans an internal source IP. A manual HOME_NET in the config or
+  # the `synapse.gen0sec.com/home-net` annotation overrides auto-discovery.
+  netvarsResolver: false
+  # Extra raw args appended to the manager invocation.
+  extraArgs: []
   serviceAccount:
     create: true
     name: ""

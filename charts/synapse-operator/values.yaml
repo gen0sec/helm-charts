@@ -86,6 +86,15 @@ operator:
   # `synapse.gen0sec.com/resolve-upstreams=true`.
   upstreamsResolver: false
 
+  # Enable the NetVarsResolver — fills the IDS
+  # `ids.address_vars.HOME_NET`/`EXTERNAL_NET` in agent config ConfigMaps
+  # labelled `synapse.gen0sec.com/resolve-netvars=true` from cluster Node
+  # IPs + PodCIDRs + RFC1918 supernets, so inline IDS blocking
+  # (`enforce_block`) can never ban an internal/cluster source IP. A
+  # manual HOME_NET in the config, or the
+  # `synapse.gen0sec.com/home-net` annotation, overrides auto-discovery.
+  netvarsResolver: false
+
   # Extra raw args appended to the manager invocation. Use for
   # debug/profile flags not yet exposed individually here.
   extraArgs: []

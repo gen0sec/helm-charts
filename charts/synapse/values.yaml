@@ -21,6 +21,12 @@ imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 
+# Extra labels/annotations on the rendered config ConfigMap. The agent
+# instance sets `synapse.gen0sec.com/resolve-netvars: "true"` here so the
+# operator's NetVarsResolver fills the IDS HOME_NET/EXTERNAL_NET.
+configMapExtraLabels: {}
+configMapExtraAnnotations: {}
+
 # Command-line arguments passed to the synapse binary.
 # By default we point to the rendered ConfigMap at /etc/synapse/config.yaml.
 args:

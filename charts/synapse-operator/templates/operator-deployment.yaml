@@ -89,6 +89,9 @@ spec:
             {{- if .Values.operator.upstreamsResolver }}
             - --upstreams-resolver
             {{- end }}
+            {{- if .Values.operator.netvarsResolver }}
+            - --netvars-resolver
+            {{- end }}
             {{- with .Values.operator.extraArgs }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
