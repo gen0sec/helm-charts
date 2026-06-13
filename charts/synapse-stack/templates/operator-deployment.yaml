@@ -46,6 +46,9 @@ spec:
             {{- if .Values.operator.netvarsResolver }}
             - --netvars-resolver
             {{- end }}
+            {{- if .Values.operator.idsHotReloadHashExclude }}
+            - --ids-hot-reload-hash-exclude
+            {{- end }}
             {{- with .Values.operator.extraArgs }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
