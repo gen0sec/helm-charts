@@ -49,6 +49,9 @@ spec:
             {{- if .Values.operator.idsHotReloadHashExclude }}
             - --ids-hot-reload-hash-exclude
             {{- end }}
+            {{- if .Values.operator.perWorkloadConfigHash }}
+            - --per-workload-config-hash
+            {{- end }}
             {{- with .Values.operator.extraArgs }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
