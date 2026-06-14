@@ -102,6 +102,12 @@ operator:
   # agents run a synapse image that hot-reloads these fields (r32+).
   idsHotReloadHashExclude: false
 
+  # Stamp each workload with a hash of ONLY the labelled ConfigMaps/Secrets it
+  # references, instead of one combined hash over all namespace config. Stops an
+  # unrelated config change (e.g. agent rules) from rolling other workloads
+  # (e.g. the proxy).
+  perWorkloadConfigHash: false
+
   # Extra raw args appended to the manager invocation. Use for
   # debug/profile flags not yet exposed individually here.
   extraArgs: []

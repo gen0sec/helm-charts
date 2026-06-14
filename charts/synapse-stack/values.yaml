@@ -65,6 +65,9 @@ operator:
   # enforce_block/rules changes don't roll the agent (it hot-reloads them).
   # Only enable once all agents run a hot-reload-capable synapse image (r32+).
   idsHotReloadHashExclude: false
+  # Per-workload config-hash: only roll a workload when ITS referenced config
+  # changes (not any namespace config). Avoids agent-rule changes rolling proxy.
+  perWorkloadConfigHash: false
   # Extra raw args appended to the manager invocation.
   extraArgs: []
   serviceAccount:
