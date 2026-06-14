@@ -466,6 +466,24 @@ entries:
   synapse:
   - apiVersion: v2
     appVersion: 0.7.0
+    created: "2026-06-14T17:29:31.596104214Z"
+    dependencies:
+    - name: valkey
+      repository: https://valkey.io/valkey-helm/
+      version: 0.7.7
+    - condition: clamavIntegration.enabled
+      name: clamav
+      repository: oci://registry.gitlab.com/xrow-public/helm-clamav/charts
+      version: 1.6.82
+    description: A Helm chart for Synapse reverse proxy with security features
+    digest: 039556e082e880e68df70692dcc1f3914cef47daecb9435c6e0e6255d7b36416
+    name: synapse
+    type: application
+    urls:
+    - https://github.com/gen0sec/helm-charts/releases/download/synapse-0.3.0/synapse-0.3.0.tgz
+    version: 0.3.0
+  - apiVersion: v2
+    appVersion: 0.7.0
     created: "2026-06-05T12:44:45.960941171Z"
     dependencies:
     - name: valkey
@@ -539,6 +557,28 @@ entries:
   synapse-operator:
   - apiVersion: v2
     appVersion: 0.1.2
+    created: "2026-06-14T17:29:31.811922474Z"
+    description: Helm chart for the Synapse Kubernetes operator
+    digest: 4944956e75d6645828a15093ef1643b0ffdbe42200a79817ff35df1f7ed4ed94
+    home: https://gen0sec.com
+    icon: https://raw.githubusercontent.com/gen0sec/helm-charts/main/images/logo.png
+    keywords:
+    - synapse
+    - operator
+    - kubernetes
+    - security
+    maintainers:
+    - email: support@gen0sec.com
+      name: Gen0Sec
+    name: synapse-operator
+    sources:
+    - https://github.com/gen0sec/synapse-operator
+    type: application
+    urls:
+    - https://github.com/gen0sec/helm-charts/releases/download/synapse-operator-1.4.0/synapse-operator-1.4.0.tgz
+    version: 1.4.0
+  - apiVersion: v2
+    appVersion: 0.1.2
     created: "2026-06-05T12:44:46.144012197Z"
     description: Helm chart for the Synapse Kubernetes operator
     digest: 1bd0b831169f77438c723a2acadafd981eebe8164c0e4d03a490473139d324ea
@@ -604,6 +644,43 @@ entries:
     - https://github.com/gen0sec/helm-charts/releases/download/synapse-operator-1.0.7/synapse-operator-1.0.7.tgz
     version: 1.0.7
   synapse-stack:
+  - apiVersion: v2
+    appVersion: 0.7.0
+    created: "2026-06-14T17:29:32.043565341Z"
+    dependencies:
+    - alias: proxy
+      condition: proxy.enabled
+      name: synapse
+      repository: file://../synapse
+      version: 0.3.0
+    - alias: agent
+      condition: agent.enabled
+      name: synapse
+      repository: file://../synapse
+      version: 0.3.0
+    description: Umbrella chart that installs the Synapse dataplane together with
+      the Synapse operator
+    digest: 23ee38c48ed3a55a672f9bfe1f7d97db0adb22d02fd1179657d531b86cf7df2d
+    home: https://gen0sec.com
+    icon: https://raw.githubusercontent.com/gen0sec/helm-charts/main/images/logo.png
+    keywords:
+    - synapse
+    - operator
+    - kubernetes
+    - security
+    - proxy
+    - firewall
+    maintainers:
+    - email: support@gen0sec.com
+      name: Gen0Sec
+    name: synapse-stack
+    sources:
+    - https://github.com/gen0sec/synapse
+    - https://github.com/gen0sec/synapse-operator
+    type: application
+    urls:
+    - https://github.com/gen0sec/helm-charts/releases/download/synapse-stack-0.2.0/synapse-stack-0.2.0.tgz
+    version: 0.2.0
   - apiVersion: v2
     appVersion: 0.7.0
     created: "2026-06-05T12:44:46.306994092Z"
@@ -777,4 +854,4 @@ entries:
     urls:
     - https://github.com/gen0sec/helm-charts/releases/download/synapse-stack-0.1.1/synapse-stack-0.1.1.tgz
     version: 0.1.1
-generated: "2026-06-05T12:44:46.307096644Z"
+generated: "2026-06-14T17:29:32.043678543Z"
