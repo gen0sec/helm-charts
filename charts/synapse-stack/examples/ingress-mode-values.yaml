@@ -1,0 +1,77 @@
+# Example overlay: drive the proxy's upstreams.yaml from synapse-class
+# Ingresses via the --ingress-mode operator (reproduces a hand-curated
+# upstreams.yaml as native Kubernetes routing).
+#
+#   helm template synapse-stack . -f examples/ingress-mode-values.yaml
+#
+# Cutover is non-disruptive when the rendered routes match the current
+# upstreams.yaml (validate first with the operator's --render-once).
+
+# Operator owns upstreams.yaml → the chart must NOT template the static key.
+proxy:
+  synapse:
+    upstreams: ""
+
+operator:
+  enabled: true
+  ingress:
+    enabled: true
+    ingressClass: synapse
+    upstreamsOutConfigMap: "synapse-os/synapse-proxy"
+    clusterDomain: cluster.local
+
+routing:
+  ingresses:
+    - name: synapse-download
+      namespace: services
+      host: download.gen0sec.com
+      paths:
+        - { path: /v1/indicators, service: download-api, port: 80 }
+        - { path: /docs/download/swagger/, service: download-api, port: 80 }
+    - name: synapse-api
+      namespace: services
+      host: api.gen0sec.com
+      paths:
+        - { path: /v1/authcheck, service: auth-api, port: 80 }
+        - { path: /v1/config, service: config-api, port: 80 }
+        - { path: /v1/agents/events, service: config-api, port: 80 }
+        - { path: /v1/metrics/batch, service: data-api, port: 80 }
+        - { path: /v1/log/batch, service: data-api, port: 80 }
+        - { path: /v1/logs, service: data-api, port: 80 }
+        - { path: /v1/events, service: data-api, port: 80 }
+        - { path: /docs/data/swagger/, service: data-api, port: 80 }
+        - { path: /v1/threat/feeds, service: feeds-api, port: 80 }
+        - { path: /docs/feeds/swagger/, service: feeds-api, port: 80 }
+        - { path: /v1/signal, service: signal-api, port: 80 }
+        - { path: /v2/signal, service: signal-api, port: 80 }
+        - { path: /docs/signal/swagger/, service: signal-api, port: 80 }
+        - { path: /v1/telemetry, service: telemetry-api, port: 80 }
+        - { path: /v1/threat, service: threat-api, port: 80 }
+        - { path: /v1/access-rules, service: threat-api, port: 80 }
+        - { path: /docs/threat/swagger/, service: threat-api, port: 80 }
+        - { path: /v1/ids-rules, service: ids-rules-api, port: 80 }
+    - name: synapse-public
+      namespace: services
+      host: public.gen0sec.com
+      paths:
+        - { path: /, service: rules-validator, port: 8080 }
+    - name: synapse-workflow
+      namespace: workflow
+      host: api.workflow.gen0sec.com
+      paths:
+        - { path: /api/slack/interact, service: wf-workflow-service-external-api, port: 8091 }
+        - { path: /api/approval, service: wf-workflow-service-external-api, port: 8091 }
+        - { path: /api/webhooks, service: wf-workflow-service-external-api, port: 8091 }
+        - { path: /api, service: wf-workflow-service-internal-api, port: 8090 }
+    # Regex route: only /api/runs/<id>/stream → external-api; sibling
+    # /api/runs paths fall through to the /api catchall → internal-api.
+    - name: synapse-workflow-runs-stream
+      namespace: workflow
+      host: api.workflow.gen0sec.com
+      annotations:
+        nginx.ingress.kubernetes.io/use-regex: "true"
+      paths:
+        - path: '/api/runs/[^/]+/stream$'
+          pathType: ImplementationSpecific
+          service: wf-workflow-service-external-api
+          port: 8091
