@@ -70,6 +70,34 @@ operator:
   perWorkloadConfigHash: false
   # Extra raw args appended to the manager invocation.
   extraArgs: []
+  # ----- Ingress-mode controller (SEPARATE Deployment) -----
+  # When enabled, deploy a second operator in --ingress-mode that renders the
+  # synapse-class Ingresses in `.routing.ingresses` into the proxy's
+  # upstreams.yaml ConfigMap key, cluster-wide. It runs ALONGSIDE the
+  # config-hash operator above (ingress-mode replaces config-hash within one
+  # process, so they are separate Deployments sharing one ServiceAccount).
+  # IMPORTANT: when enabled, also set `proxy.synapse.upstreams: ""` so the
+  # operator owns the routes (the chart then stops templating that key to
+  # avoid a Helm 3-way-merge clobber on upgrade).
+  ingress:
+    enabled: false
+    replicaCount: 1
+    ingressClass: synapse
+    # "<namespace>/<name>" of the proxy ConfigMap whose upstreams.yaml key the
+    # operator renders. REQUIRED when ingress.enabled.
+    upstreamsOutConfigMap: ""
+    clusterDomain: cluster.local
+    # Emit backend ClusterIP:port instead of the Service FQDN (skips per-
+    # request DNS); falls back to FQDN for headless / unallocated Services.
+    resolveBackendClusterIPs: false
+    extraArgs: []
+    resources:
+      requests:
+        cpu: 5m
+        memory: 32Mi
+      limits:
+        cpu: 200m
+        memory: 128Mi
   serviceAccount:
     create: true
     name: ""
@@ -82,3 +110,12 @@ operator:
     limits:
       cpu: 200m
       memory: 128Mi
+
+# ----- Native Kubernetes routing (synapse-class Ingresses) -----
+# Consumed by the --ingress-mode operator (operator.ingress.enabled) and
+# rendered into the proxy upstreams.yaml. Each entry becomes one Ingress; it
+# MUST be in the same namespace as its backend Services. Empty by default —
+# see examples/ingress-mode-values.yaml for a full set. Regex paths use
+# pathType ImplementationSpecific + the nginx use-regex annotation.
+routing:
+  ingresses: []

@@ -14,5 +14,11 @@ metadata:
 data:
   config.yaml: |
 {{ .Values.synapse.config | nindent 4 }}
+  {{- /* When the --ingress-mode operator owns this ConfigMap's
+         upstreams.yaml key (set synapse.upstreams to empty), the chart must
+         NOT template the key — otherwise Helm's 3-way merge would clobber the
+         operator-rendered routes on every upgrade. */}}
+  {{- if .Values.synapse.upstreams }}
   upstreams.yaml: |
 {{ .Values.synapse.upstreams | nindent 4 }}
+  {{- end }}

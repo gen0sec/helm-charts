@@ -1,0 +1,75 @@
+{{- if and .Values.operator.enabled .Values.operator.ingress.enabled }}
+# Second operator Deployment running in --ingress-mode (central layout):
+# watches synapse-class Ingresses cluster-wide and renders the proxy's
+# upstreams.yaml ConfigMap key. It runs ALONGSIDE the config-hash operator
+# (operator-deployment.yaml) — ingress-mode replaces config-hash within a
+# single process, so the two responsibilities are separate Deployments
+# sharing one ServiceAccount/RBAC.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: synapse-operator-ingress
+  namespace: {{ .Values.global.namespaces.operator }}
+  labels:
+    app.kubernetes.io/name: synapse-operator-ingress
+    app.kubernetes.io/component: ingress-controller
+spec:
+  replicas: {{ .Values.operator.ingress.replicaCount | default 1 }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: synapse-operator-ingress
+      app.kubernetes.io/component: ingress-controller
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: synapse-operator-ingress
+        app.kubernetes.io/component: ingress-controller
+    spec:
+      serviceAccountName: {{ default "synapse-operator" .Values.operator.serviceAccount.name }}
+      containers:
+        - name: manager
+          image: "{{ .Values.operator.image.repository }}:{{ .Values.operator.image.tag }}"
+          imagePullPolicy: {{ .Values.operator.image.pullPolicy }}
+          # No --namespace flag: ingresses + backend Services live in
+          # arbitrary namespaces, so the watch must be cluster-wide.
+          args:
+            - --ingress-mode
+            - --ingress-class={{ .Values.operator.ingress.ingressClass }}
+            - --upstreams-out-configmap={{ required "operator.ingress.upstreamsOutConfigMap is required when operator.ingress.enabled" .Values.operator.ingress.upstreamsOutConfigMap }}
+            - --cluster-domain={{ .Values.operator.ingress.clusterDomain }}
+            {{- if .Values.operator.ingress.resolveBackendClusterIPs }}
+            - --resolve-backend-cluster-ips
+            {{- end }}
+            - --metrics-bind-address=:8080
+            - --health-probe-bind-address=:8081
+            {{- with .Values.operator.ingress.extraArgs }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          ports:
+            - containerPort: 8080
+              name: metrics
+            - containerPort: 8081
+              name: healthz
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8081
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8081
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            {{- toYaml .Values.operator.ingress.resources | nindent 12 }}
+      {{- with .Values.operator.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.operator.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}
