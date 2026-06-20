@@ -3,8 +3,8 @@ name: synapse-operator
 description: Helm chart for the Synapse Kubernetes operator
 # Release synapse-operator v1.0.0
 type: application
-version: 1.4.1
-appVersion: "0.1.2"
+version: 1.4.2
+appVersion: "0.1.8"
 home: https://gen0sec.com
 icon: https://raw.githubusercontent.com/gen0sec/helm-charts/main/images/logo.png
 sources:
