@@ -14,7 +14,9 @@ rules:
     verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
   - apiGroups: [""]
     resources: ["secrets"]
-    verbs: ["get", "list", "watch"]
+    # Read TLS Secrets to project Ingress certs; write the operator-owned
+    # cert output Secret when --certs-out-secret is set (central mode).
+    verbs: ["get", "list", "watch", "create", "update", "patch"]
   - apiGroups: [""]
     resources: ["services"]
     # IngressReconciler resolves Service backends → ClusterIPs when
