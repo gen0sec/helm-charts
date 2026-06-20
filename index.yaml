@@ -574,6 +574,28 @@ entries:
     version: 0.1.1
   synapse-operator:
   - apiVersion: v2
+    appVersion: 0.1.8
+    created: "2026-06-20T15:23:14.840693401Z"
+    description: Helm chart for the Synapse Kubernetes operator
+    digest: 2831f66489b195227b0f81d091fc5334c1ce035cae2765103efe57a2194aca1b
+    home: https://gen0sec.com
+    icon: https://raw.githubusercontent.com/gen0sec/helm-charts/main/images/logo.png
+    keywords:
+    - synapse
+    - operator
+    - kubernetes
+    - security
+    maintainers:
+    - email: support@gen0sec.com
+      name: Gen0Sec
+    name: synapse-operator
+    sources:
+    - https://github.com/gen0sec/synapse-operator
+    type: application
+    urls:
+    - https://github.com/gen0sec/helm-charts/releases/download/synapse-operator-1.4.2/synapse-operator-1.4.2.tgz
+    version: 1.4.2
+  - apiVersion: v2
     appVersion: 0.1.2
     created: "2026-06-20T12:36:38.906027979Z"
     description: Helm chart for the Synapse Kubernetes operator
@@ -931,4 +953,4 @@ entries:
     urls:
     - https://github.com/gen0sec/helm-charts/releases/download/synapse-stack-0.1.1/synapse-stack-0.1.1.tgz
     version: 0.1.1
-generated: "2026-06-20T12:36:38.906102491Z"
+generated: "2026-06-20T15:23:14.840779083Z"
