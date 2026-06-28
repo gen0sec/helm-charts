@@ -111,8 +111,29 @@ spec:
         {{- end }}
       volumes:
         - name: config
+          {{- if .Values.synapse.upstreamsConfigMap }}
+          # Take config.yaml from the chart ConfigMap but upstreams.yaml from
+          # the operator-resolved (ClusterIP) ConfigMap. Projected, not
+          # subPath, so both keys keep updating live on a ConfigMap change.
+          # The resolved CM is optional so a missing/not-yet-reconciled CM
+          # can't wedge the pod in ContainerCreating.
+          projected:
+            sources:
+              - configMap:
+                  name: {{ include "synapse.fullname" . }}
+                  items:
+                    - key: config.yaml
+                      path: config.yaml
+              - configMap:
+                  name: {{ .Values.synapse.upstreamsConfigMap }}
+                  optional: true
+                  items:
+                    - key: upstreams.yaml
+                      path: upstreams.yaml
+          {{- else }}
           configMap:
             name: {{ include "synapse.fullname" . }}
+          {{- end }}
         {{- with .Values.volumes }}
         {{- toYaml . | nindent 8 }}
         {{- end }}

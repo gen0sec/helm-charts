@@ -3,8 +3,10 @@ name: synapse
 description: A Helm chart for Synapse reverse proxy with security features
 type: application
 
-# Bumped: DaemonSet kind support (agent role) — see templates/deployment.yaml.
-version: 0.3.1
+# Bumped: optional projected upstreams mount (synapse.upstreamsConfigMap) so
+# the proxy can read operator-resolved ClusterIP upstreams — see
+# templates/deployment.yaml.
+version: 0.4.0
 appVersion: "0.7.0"
 
 dependencies:
