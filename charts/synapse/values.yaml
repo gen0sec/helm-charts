@@ -90,6 +90,20 @@ httpRoute:
 # Note: YAML config has higher priority than env vars, so leave values empty
 # if you plan to override via environment variables.
 synapse:
+  # Optional: name of a ConfigMap (same namespace) whose `upstreams.yaml`
+  # key holds upstreams with their server addresses already resolved to
+  # ClusterIP literals — produced by the synapse-operator DNS->IP
+  # UpstreamsResolverReconciler (label the source CM with
+  # `synapse.gen0sec.com/resolve-upstreams: "true"` and annotate it with
+  # `synapse.gen0sec.com/resolved-configmap: <thisName>` via
+  # configMapExtraLabels/configMapExtraAnnotations).
+  #
+  # When set, the proxy mounts config.yaml from the chart's ConfigMap but
+  # upstreams.yaml from THIS ConfigMap, so `upstream_peer` is handed IP
+  # literals and never resolves an upstream hostname on the request path.
+  # When empty (default) the proxy mounts the chart's ConfigMap as-is
+  # (hostname upstreams; the in-proxy dns_cache handles resolution).
+  upstreamsConfigMap: ""
   config: |
     mode: "proxy"
 
