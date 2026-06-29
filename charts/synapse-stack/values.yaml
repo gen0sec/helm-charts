@@ -70,6 +70,26 @@ operator:
   perWorkloadConfigHash: false
   # Extra raw args appended to the manager invocation.
   extraArgs: []
+  # ----- East-west producers (off by default) -----
+  # Each producer needs an API key with identity:write, from apiKeySecret.
+  downloadAPIURL: "https://api.gen0sec.com/v1"
+  apiKeySecret:
+    name: synapse-operator-api-key
+    key: SYNAPSE_API_KEY
+  # IdentityProducer: pod IP -> workload MMDB, uploaded to download-api.
+  identityProducer:
+    enabled: false
+    interval: "" # e.g. 60s; empty = operator default
+  # EdgeProducer: NetworkPolicy -> declared-edge allow-list, uploaded to download-api.
+  edgeProducer:
+    enabled: false
+    interval: ""
+  # GraphProducer: uploads identities + edges to service-graph-api, which writes
+  # the AGE service_graph. The operator stays REST-only (no DB).
+  graphProducer:
+    enabled: false
+    interval: ""
+    serviceGraphURL: "http://service-graph-api.services.svc.cluster.local:9999"
   # ----- Ingress-mode controller (SEPARATE Deployment) -----
   # When enabled, deploy a second operator in --ingress-mode that renders the
   # synapse-class Ingresses in `.routing.ingresses` into the proxy's

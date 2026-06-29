@@ -52,9 +52,41 @@ spec:
             {{- if .Values.operator.perWorkloadConfigHash }}
             - --per-workload-config-hash
             {{- end }}
+            {{- if or .Values.operator.identityProducer.enabled .Values.operator.edgeProducer.enabled }}
+            - --download-api-url={{ .Values.operator.downloadAPIURL }}
+            {{- end }}
+            {{- if .Values.operator.identityProducer.enabled }}
+            - --identity-producer
+            {{- with .Values.operator.identityProducer.interval }}
+            - --identity-producer-interval={{ . }}
+            {{- end }}
+            {{- end }}
+            {{- if .Values.operator.edgeProducer.enabled }}
+            - --edge-producer
+            {{- with .Values.operator.edgeProducer.interval }}
+            - --edge-producer-interval={{ . }}
+            {{- end }}
+            {{- end }}
+            {{- if .Values.operator.graphProducer.enabled }}
+            - --graph-producer
+            - --service-graph-url={{ .Values.operator.graphProducer.serviceGraphURL }}
+            {{- with .Values.operator.graphProducer.interval }}
+            - --graph-producer-interval={{ . }}
+            {{- end }}
+            {{- end }}
             {{- with .Values.operator.extraArgs }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
+          {{- if or .Values.operator.identityProducer.enabled .Values.operator.edgeProducer.enabled .Values.operator.graphProducer.enabled }}
+          env:
+            # API key with identity:write — the producers PUT to download-api /
+            # service-graph-api with a Bearer token.
+            - name: SYNAPSE_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.operator.apiKeySecret.name }}
+                  key: {{ .Values.operator.apiKeySecret.key }}
+          {{- end }}
           ports:
             - containerPort: 8080
               name: metrics
