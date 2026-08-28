@@ -43,6 +43,14 @@ operator:
     repository: ghcr.io/gen0sec/synapse-operator
     tag: "0.1.2"
     pullPolicy: IfNotPresent
+  # Pull secrets for the operator's own images. Separate from the subcharts'
+  # imagePullSecrets: the operator is deployed by THIS chart's templates, not by
+  # the synapse subchart, so proxy./agent.imagePullSecrets never reached it and
+  # --set operator.imagePullSecrets was accepted and silently discarded.
+  #
+  # Needed whenever operator.image.repository is private — e.g. pulling from
+  # registry.gen0sec.com rather than a public mirror.
+  imagePullSecrets: []
   replicaCount: 1
   leaderElect: true
   # Set-based: both workloads' name labels differ (synapse-proxy /
