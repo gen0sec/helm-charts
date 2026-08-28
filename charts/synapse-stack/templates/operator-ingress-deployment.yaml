@@ -26,6 +26,10 @@ spec:
         app.kubernetes.io/component: ingress-controller
     spec:
       serviceAccountName: {{ default "synapse-operator" .Values.operator.serviceAccount.name }}
+      {{- with .Values.operator.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       containers:
         - name: manager
           image: "{{ .Values.operator.image.repository }}:{{ .Values.operator.image.tag }}"
