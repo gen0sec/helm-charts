@@ -6,7 +6,7 @@ type: application
 # Bumped: optional projected upstreams mount (synapse.upstreamsConfigMap) so
 # the proxy can read operator-resolved ClusterIP upstreams — see
 # templates/deployment.yaml.
-version: 0.4.0
+version: 0.4.1
 appVersion: "0.7.0"
 
 dependencies:

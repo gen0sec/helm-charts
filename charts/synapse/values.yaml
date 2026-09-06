@@ -70,7 +70,26 @@ service:
   type: ClusterIP
   httpPort: 80
   httpsPort: 443
+  # The container port the health listener uses. Still declared on the Pod, and
+  # still what a probe would target -- this only names the port, it does not
+  # publish it.
   healthPort: 8080
+  # Publish healthPort on the Service. Off by default, and you almost certainly
+  # want it off.
+  #
+  # The health endpoint binds LOOPBACK inside the container (NOTES.txt has always
+  # said `http://localhost:8080/health`), so a Service port pointing at it never
+  # routes: a request to the Pod IP on this port is refused, not answered. That
+  # makes the published port useless on `type: ClusterIP` and actively harmful on
+  # `type: LoadBalancer`, where the cloud controller turns every Service port into
+  # a listener AND opens the load balancer's security group to 0.0.0.0/0 for it --
+  # an internet-facing listener to nothing, on a port that reads as an
+  # administrative endpoint to anyone scanning.
+  #
+  # The default probes below target this port and so would fail; a chart consumer
+  # has to repoint them at httpPort, which is the giveaway that nothing serves
+  # this port on a routable address.
+  exposeHealth: false
 
 ingress:
   enabled: false
