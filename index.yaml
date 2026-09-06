@@ -466,6 +466,24 @@ entries:
   synapse:
   - apiVersion: v2
     appVersion: 0.7.0
+    created: "2026-09-06T19:01:19.690530394Z"
+    dependencies:
+    - name: valkey
+      repository: https://valkey.io/valkey-helm/
+      version: 0.7.7
+    - condition: clamavIntegration.enabled
+      name: clamav
+      repository: oci://registry.gitlab.com/xrow-public/helm-clamav/charts
+      version: 1.6.82
+    description: A Helm chart for Synapse reverse proxy with security features
+    digest: 8ad846c4c8f1944ee00b248f5e9d64b4264ee7b106dd6af6fa7bb2baac0d8265
+    name: synapse
+    type: application
+    urls:
+    - https://github.com/gen0sec/helm-charts/releases/download/synapse-0.4.1/synapse-0.4.1.tgz
+    version: 0.4.1
+  - apiVersion: v2
+    appVersion: 0.7.0
     created: "2026-06-28T16:04:21.333013629Z"
     dependencies:
     - name: valkey
@@ -1082,4 +1100,4 @@ entries:
     urls:
     - https://github.com/gen0sec/helm-charts/releases/download/synapse-stack-0.1.1/synapse-stack-0.1.1.tgz
     version: 0.1.1
-generated: "2026-08-28T20:55:01.404225733Z"
+generated: "2026-09-06T19:01:19.69064049Z"
