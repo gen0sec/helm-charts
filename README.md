@@ -20,7 +20,7 @@
 
 ## Gen0Sec Helm Charts
 
-Helm charts for deploying the **Synapse** dataplane and its **Kubernetes operator**. The recommended entry point is the `synapse-stack` umbrella chart, which installs the proxy and the operator together.
+Helm charts for deploying the **Synapse** dataplane and its **Kubernetes operator**.
 
 > Requires **Helm 3** and a conformant **Kubernetes** cluster. Published to `https://helm.gen0sec.com`.
 
@@ -30,9 +30,19 @@ Helm charts for deploying the **Synapse** dataplane and its **Kubernetes operato
 
 | Chart | Version | App | Purpose |
 |---|---|---|---|
-| [`synapse-stack`](charts/synapse-stack) | 0.1.2 | 0.3.1 | **Umbrella (recommended)** — the `synapse` dataplane + the operator in one release |
-| [`synapse`](charts/synapse) | 0.1.2 | 0.3.1 | Synapse reverse proxy / dataplane. Depends on `valkey`; optional `clamav` (`clamavIntegration.enabled`) |
-| [`synapse-operator`](charts/synapse-operator) | 1.0.7 | 1.0.0 | The Synapse Kubernetes operator (config-sync controller) |
+| [`synapse-stack`](charts/synapse-stack) | 0.5.2 | 0.7.0 | **Umbrella** — two `synapse` workloads from one release, aliased `proxy` and `agent` |
+| [`synapse`](charts/synapse) | 0.4.1 | 0.7.0 | Synapse reverse proxy / dataplane. Depends on `valkey`; optional `clamav` (`clamavIntegration.enabled`) |
+| [`synapse-operator`](charts/synapse-operator) | 1.4.2 | 0.1.8 | The Synapse Kubernetes operator (config-sync controller) |
+
+`synapse-stack` deploys the **dataplane twice** from the same subchart, each alias getting its
+own values tree and identity:
+
+| Alias | Workload | Role | Condition |
+|---|---|---|---|
+| `proxy` | `synapse-proxy` | TLS passthrough / L7 / Tier-2 terminate | `proxy.enabled` |
+| `agent` | `synapse-agent` | XDP transparent observe (edge only) | `agent.enabled` |
+
+It does **not** include the operator — install `synapse-operator` separately if you want it.
 
 ---
 
@@ -44,16 +54,25 @@ helm repo update
 helm search repo gen0sec        # list available charts + versions
 ```
 
-**Recommended — dataplane + operator together:**
+**A single dataplane:**
+
+```bash
+helm install synapse gen0sec/synapse -n synapse --create-namespace
+```
+
+**Proxy and edge agent together, from the umbrella:**
 
 ```bash
 helm install synapse-stack gen0sec/synapse-stack -n synapse --create-namespace
 ```
 
-**Individual charts:**
+Both aliases default to enabled. Turn one off with `--set agent.enabled=false`, and set
+per-alias values under the alias key — `--set proxy.service.type=LoadBalancer`, not
+`--set service.type=...`.
+
+**The operator (separate release):**
 
 ```bash
-helm install synapse          gen0sec/synapse          -n synapse        --create-namespace
 helm install synapse-operator gen0sec/synapse-operator -n synapse-os --create-namespace
 ```
 
@@ -72,7 +91,7 @@ The chart wires these operator flags from `values.yaml`:
 | Value | Operator flag | Default |
 |---|---|---|
 | `operator.leaderElect` | `--leader-elect` | `true` |
-| `operator.labelSelector` | `--label-selector` | `app.kubernetes.io/name=synapse` |
+| `operator.labelSelector` | `--label-selector` | `app.kubernetes.io/name in (synapse,synapse-proxy,synapse-agent)` |
 | `operator.configHashAnnotation` | `--config-hash-annotation` | `synapse.gen0sec.com/config-hash` |
 | `operator.ignoreConfigMapKeys` | `--ignore-configmap-keys` | `upstreams.yaml` |
 | `operator.ignoreSecretKeys` | `--ignore-secret-keys` | _(empty)_ |
@@ -85,10 +104,38 @@ The chart wires these operator flags from `values.yaml`:
 
 | Value | Chart | Notes |
 |---|---|---|
-| `synapse.gen0sec.base_url` | synapse | Gen0Sec API base URL (default `https://api.gen0sec.com/v1`) |
-| `synapse.gen0sec.apiKey` | synapse | API key (rendered into a Secret / `AX_GEN0SEC_API_KEY`) |
+| `service.type` | synapse | `ClusterIP` by default. Every Service port becomes a load balancer listener on `LoadBalancer` |
+| `service.exposeHealth` | synapse | `false`. The health endpoint binds loopback in the container, so publishing its port routes nowhere — see below |
 | `clamavIntegration.enabled` | synapse | Pulls in the `clamav` subchart for content scanning |
-| `operator.image.repository` / `tag` | synapse-operator | `ghcr.io/gen0sec/synapse-operator:latest` by default |
+| `operator.image.repository` / `tag` | synapse-operator | `ghcr.io/gen0sec/synapse-operator`; an empty `tag` falls back to the chart's `appVersion` |
+
+### Configuring the dataplane
+
+`synapse.config` is a **block scalar** — the literal `config.yaml` the container reads, rendered
+into a ConfigMap. It is not a structured values tree, so its contents cannot be reached with
+`--set synapse.something`. To change the platform endpoint or key, edit that block:
+
+```yaml
+synapse:
+  config: |
+    platform:
+      api_key: ""
+      base_url: "https://api.gen0sec.com/v1"
+```
+
+The chart does not template an API-key Secret. Supply the key through the config block, or
+override it at runtime with the container's `AX_`-prefixed environment variables.
+
+### A note on the health port
+
+`service.healthPort` (8080) names a **container** port. The health endpoint listens on loopback
+inside the container, so nothing answers on the Pod IP there — which is why the default probes,
+pointing at that port, have to be repointed at `httpPort` in practice.
+
+Publishing it on the Service is therefore off by default. Enabling it on a `LoadBalancer`
+service is the case to avoid: the cloud controller creates a listener for it and opens the load
+balancer's security group to `0.0.0.0/0`, giving you an internet-facing port that accepts
+nothing.
 
 See each chart's `values.yaml` for the full set:
 [`synapse`](charts/synapse/values.yaml) ·
@@ -123,4 +170,4 @@ To cut a release, bump the chart's `version` in its `Chart.yaml` and merge to `m
 
 ## License
 
-These charts are distributed under the **Apache-2.0** license. _(Note: no `LICENSE` file is currently committed to this repository — see [gen0sec/synapse-operator](https://github.com/gen0sec/synapse-operator/blob/main/LICENSE) for the canonical text.)_
+These charts are distributed under the **Apache-2.0** license — see [`LICENSE`](LICENSE).
