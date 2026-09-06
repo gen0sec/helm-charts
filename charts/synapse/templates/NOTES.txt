@@ -37,10 +37,12 @@
 2. Synapse Configuration:
    - Configuration file: /etc/synapse/config.yaml (mounted from ConfigMap)
    - Environment variables: All configuration can be overridden with AX_ prefix
-   - Health check endpoint: http://localhost:8080/health
+   - Health check endpoint: http://localhost:{{ .Values.service.healthPort }}/health
+     (loopback only, inside the container -- not reachable on the Pod IP)
    - HTTP port: {{ .Values.service.httpPort }}
    - HTTPS port: {{ .Values.service.httpsPort }}
-   - Health port: {{ .Values.service.healthPort }}
+   - Health port: {{ .Values.service.healthPort }} (container port; published on the
+     Service only when service.exposeHealth is true)
 
 3. Security Features:
    - BPF/XDP packet filtering enabled
