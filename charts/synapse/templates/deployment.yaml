@@ -56,6 +56,10 @@ spec:
       {{- if .Values.shareProcessNamespace }}
       shareProcessNamespace: true
       {{- end }}
+      {{- with .Values.initContainers }}
+      initContainers:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       containers:
         - name: {{ .Chart.Name }}
           {{- with .Values.securityContext }}

@@ -3,10 +3,10 @@ name: synapse
 description: A Helm chart for Synapse reverse proxy with security features
 type: application
 
-# Bumped: service.externalTrafficPolicy, so a LoadBalancer/NodePort Service can
-# preserve the client source IP instead of SNATing it away — see
-# templates/service.yaml.
-version: 0.4.2
+# Bumped: initContainers support plus optional RBAC for the operator's
+# config-sync reload sidecar, which delivers upstreams via the Kubernetes
+# API instead of a ConfigMap mount — see templates/configsync-rbac.yaml.
+version: 0.5.0
 appVersion: "0.7.0"
 
 dependencies:

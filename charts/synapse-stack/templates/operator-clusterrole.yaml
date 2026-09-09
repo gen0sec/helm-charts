@@ -22,6 +22,24 @@ rules:
     # NetVarsResolver also collects LoadBalancer Service VIPs into HOME_NET
     # (a source-rewriting edge LB makes the agent see the LB IP as source).
     verbs: ["get", "list", "watch"]
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["ingresses"]
+    # Required by the --ingress-mode operator rendered in
+    # operator-ingress-deployment.yaml, which runs on this same
+    # ServiceAccount.
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["ingressclasses"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["ingresses/status"]
+    # --publish-status-address writes .status.loadBalancer.ingress.
+    verbs: ["get", "update", "patch"]
+  - apiGroups: ["discovery.k8s.io"]
+    resources: ["endpointslices"]
+    # --resolve-backend-endpoints renders ready pod IPs as the server list
+    # so upstreams carry literals and pod churn re-renders immediately.
+    verbs: ["get", "list", "watch"]
   - apiGroups: ["apps"]
     resources: ["deployments"]
     verbs: ["get", "list", "watch", "patch", "update"]

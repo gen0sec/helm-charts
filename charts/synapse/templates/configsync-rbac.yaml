@@ -1,0 +1,39 @@
+{{- if .Values.configSync.rbac.create }}
+{{- /*
+Read access for the config-sync sidecar, which watches the rendered
+ConfigMap through the Kubernetes API instead of waiting on kubelet to
+re-project a mounted volume.
+
+Scoped to this namespace, but NOT to a single ConfigMap: RBAC resourceNames
+is ignored for list and watch, which a watch-based informer requires. The
+sidecar narrows what it CACHES with a field selector; that is a memory and
+traffic optimisation, not a privilege boundary. If read access to every
+ConfigMap in the namespace is unacceptable, put the rendered ConfigMap in a
+namespace of its own.
+*/}}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ include "synapse.fullname" . }}-config-sync
+  labels:
+    {{- include "synapse.labels" . | nindent 4 }}
+rules:
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "synapse.fullname" . }}-config-sync
+  labels:
+    {{- include "synapse.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ include "synapse.fullname" . }}-config-sync
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "synapse.serviceAccountName" . }}
+    namespace: {{ .Release.Namespace }}
+{{- end }}
