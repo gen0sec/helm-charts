@@ -13,6 +13,9 @@ spec:
   {{- with .Values.service.loadBalancerIP }}
   loadBalancerIP: {{ . }}
   {{- end }}
+  {{- if and .Values.service.externalTrafficPolicy (has .Values.service.type (list "LoadBalancer" "NodePort")) }}
+  externalTrafficPolicy: {{ .Values.service.externalTrafficPolicy }}
+  {{- end }}
   ports:
     - port: {{ .Values.service.httpPort }}
       targetPort: http

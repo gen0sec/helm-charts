@@ -3,10 +3,10 @@ name: synapse
 description: A Helm chart for Synapse reverse proxy with security features
 type: application
 
-# Bumped: optional projected upstreams mount (synapse.upstreamsConfigMap) so
-# the proxy can read operator-resolved ClusterIP upstreams — see
-# templates/deployment.yaml.
-version: 0.4.1
+# Bumped: service.externalTrafficPolicy, so a LoadBalancer/NodePort Service can
+# preserve the client source IP instead of SNATing it away — see
+# templates/service.yaml.
+version: 0.4.2
 appVersion: "0.7.0"
 
 dependencies:
