@@ -34,6 +34,12 @@ rules:
   - apiGroups: ["networking.k8s.io"]
     resources: ["ingressclasses"]
     verbs: ["get", "list", "watch"]
+  - apiGroups: ["discovery.k8s.io"]
+    resources: ["endpointslices"]
+    # --resolve-backend-endpoints renders ready pod IPs as the server list,
+    # so upstreams carry IP literals (synapse never resolves them) and a
+    # replaced pod is picked up on the next render.
+    verbs: ["get", "list", "watch"]
   - apiGroups: ["apps"]
     resources: ["deployments"]
     verbs: ["get", "list", "watch", "patch", "update"]

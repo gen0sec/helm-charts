@@ -86,6 +86,9 @@ spec:
             {{- if .Values.operator.resolveBackendClusterIPs }}
             - --resolve-backend-cluster-ips
             {{- end }}
+            {{- if .Values.operator.resolveBackendEndpoints }}
+            - --resolve-backend-endpoints
+            {{- end }}
             {{- if .Values.operator.upstreamsResolver }}
             - --upstreams-resolver
             {{- end }}

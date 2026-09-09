@@ -1,0 +1,102 @@
+# Example overlay: sub-second config delivery + live endpoint tracking.
+#
+#   helm template synapse-stack . -f examples/config-sync-values.yaml
+#
+# Two independent problems are addressed here.
+#
+# 1. DELIVERY LATENCY. In central mode the operator writes upstreams.yaml
+#    into a ConfigMap and the proxy picks it up from a mounted volume — but
+#    kubelet only re-projects a mounted ConfigMap on its own sync loop, so
+#    that can take ~60s, and nothing signals the proxy in the meantime
+#    (SIGHUP is disabled when writing to a ConfigMap, and upstreams.yaml is
+#    in --ignore-configmap-keys so the pods are deliberately not rolled).
+#    The config-sync sidecar reads the ConfigMap straight from the API and
+#    SIGHUPs synapse, which lands well inside a second.
+#
+# 2. STALE UPSTREAM ADDRESSES. Rendering a Service FQDN leaves resolution to
+#    synapse's in-process DNS cache, which pins the first A record for the
+#    cache TTL and does not evict it when a re-resolve fails — so a replaced
+#    pod can keep receiving traffic long after it is gone.
+#    --resolve-backend-endpoints renders live pod IPs instead; synapse treats
+#    those as literals and never resolves anything.
+#
+# Synapse itself is unchanged: it still just reads a file and reloads.
+
+proxy:
+  # The operator owns upstreams.yaml, so the chart must not template it.
+  synapse:
+    upstreams: ""
+    upstreamsConfigMap: ""
+    # Read upstreams from the shared volume the sidecar writes, not from the
+    # ConfigMap mount.
+    config: |
+      mode: "proxy"
+      network:
+        upstream:
+          conf: "/shared/upstreams.yaml"
+
+  # Required so the sidecar can see and signal the synapse process.
+  shareProcessNamespace: true
+
+  configSync:
+    rbac:
+      create: true
+
+  volumes:
+    - name: shared
+      emptyDir: {}
+  volumeMounts:
+    - name: shared
+      mountPath: /shared
+
+  # Primes the file BEFORE synapse starts. Not optional: synapse-proxy does a
+  # blocking initial read of the upstreams file and, if it fails, aborts its
+  # background service without ever establishing a file watch — so a pod that
+  # starts first would stay deaf to every later update.
+  initContainers:
+    - name: config-sync-init
+      image: ghcr.io/gen0sec/synapse-operator:latest
+      args:
+        - --config-sync
+        - --sync-once
+        - --watch-configmap=synapse-os/synapse-proxy
+        - --sync-keys=upstreams.yaml
+        - --out-dir=/shared
+        - --ensure-files=upstreams.yaml
+      volumeMounts:
+        - name: shared
+          mountPath: /shared
+
+  extraContainers:
+    - name: config-sync
+      image: ghcr.io/gen0sec/synapse-operator:latest
+      args:
+        - --config-sync
+        - --watch-configmap=synapse-os/synapse-proxy
+        - --sync-keys=upstreams.yaml
+        - --out-dir=/shared
+        - --reload-process-name=synapse
+        - --reload-debounce=500ms
+      securityContext:
+        # SIGHUP requires uid parity with the target. The operator image is
+        # distroless nonroot (USER 65532) while synapse runs as root, so
+        # without this the kill fails with EPERM and reloads silently stop.
+        runAsUser: 0
+        runAsNonRoot: false
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        capabilities:
+          drop: ["ALL"]
+      volumeMounts:
+        - name: shared
+          mountPath: /shared
+
+operator:
+  enabled: true
+  ingress:
+    enabled: true
+    ingressClass: synapse
+    upstreamsOutConfigMap: "synapse-os/synapse-proxy"
+    clusterDomain: cluster.local
+    # Live pod IPs rather than a Service FQDN.
+    resolveBackendEndpoints: true

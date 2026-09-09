@@ -118,6 +118,12 @@ operator:
     # Emit backend ClusterIP:port instead of the Service FQDN (skips per-
     # request DNS); falls back to FQDN for headless / unallocated Services.
     resolveBackendClusterIPs: false
+    # Render READY pod IPs from EndpointSlices instead of one Service
+    # address. Pod IPs are literals, so synapse never resolves them and a
+    # replaced pod is picked up on the next render rather than after its
+    # DNS-cache TTL. Falls back to ClusterIP/FQDN when there are no ready
+    # endpoints, so scaling to zero never blanks a route.
+    resolveBackendEndpoints: false
     extraArgs: []
     resources:
       requests:
