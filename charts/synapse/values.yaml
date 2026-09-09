@@ -90,6 +90,25 @@ service:
   # has to repoint them at httpPort, which is the giveaway that nothing serves
   # this port on a routable address.
   exposeHealth: false
+  # Source-IP preservation for externally-reachable Services. Empty leaves the
+  # field unset, so Kubernetes applies its own default of `Cluster`.
+  #
+  # Under `Cluster` every node accepts the traffic and forwards it on, SNATing
+  # to a node-local address on the way. The proxy then sees the CNI gateway --
+  # not the caller -- so `X-Forwarded-For`, the access log, the IDS HOME_NET
+  # checks and any source-IP firewall rule all observe an internal address and
+  # are effectively blind. `Local` drops the extra hop and hands the socket the
+  # real client address.
+  #
+  # `Local` also means a node with no ready pod stops answering, which is what
+  # makes the cloud health check route traffic away from it -- fine for the
+  # DaemonSet deployment, and for a Deployment it is worth pairing with a
+  # spread constraint so every advertised node actually has a replica.
+  #
+  # Only `LoadBalancer` and `NodePort` accept this field; the API server
+  # rejects it outright on a `ClusterIP` Service, so the template applies it
+  # only for those two types.
+  externalTrafficPolicy: ""
 
 ingress:
   enabled: false
