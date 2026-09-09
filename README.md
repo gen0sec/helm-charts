@@ -30,8 +30,8 @@ Helm charts for deploying the **Synapse** dataplane and its **Kubernetes operato
 
 | Chart | Version | App | Purpose |
 |---|---|---|---|
-| [`synapse-stack`](charts/synapse-stack) | 0.5.2 | 0.7.0 | **Umbrella** — two `synapse` workloads from one release, aliased `proxy` and `agent` |
-| [`synapse`](charts/synapse) | 0.4.1 | 0.7.0 | Synapse reverse proxy / dataplane. Depends on `valkey`; optional `clamav` (`clamavIntegration.enabled`) |
+| [`synapse-stack`](charts/synapse-stack) | 0.5.3 | 0.7.0 | **Umbrella** — two `synapse` workloads from one release, aliased `proxy` and `agent` |
+| [`synapse`](charts/synapse) | 0.4.2 | 0.7.0 | Synapse reverse proxy / dataplane. Depends on `valkey`; optional `clamav` (`clamavIntegration.enabled`) |
 | [`synapse-operator`](charts/synapse-operator) | 1.4.2 | 0.1.8 | The Synapse Kubernetes operator (config-sync controller) |
 
 `synapse-stack` deploys the **dataplane twice** from the same subchart, each alias getting its
@@ -106,6 +106,7 @@ The chart wires these operator flags from `values.yaml`:
 |---|---|---|
 | `service.type` | synapse | `ClusterIP` by default. Every Service port becomes a load balancer listener on `LoadBalancer` |
 | `service.exposeHealth` | synapse | `false`. The health endpoint binds loopback in the container, so publishing its port routes nowhere — see below |
+| `service.externalTrafficPolicy` | synapse | Unset (Kubernetes defaults to `Cluster`, which SNATs the client IP away). Set `Local` on a `LoadBalancer`/`NodePort` Service to preserve the real source address |
 | `clamavIntegration.enabled` | synapse | Pulls in the `clamav` subchart for content scanning |
 | `operator.image.repository` / `tag` | synapse-operator | `ghcr.io/gen0sec/synapse-operator`; an empty `tag` falls back to the chart's `appVersion` |
 
