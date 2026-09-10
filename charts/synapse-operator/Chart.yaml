@@ -3,6 +3,8 @@ name: synapse-operator
 description: Helm chart for the Synapse Kubernetes operator
 # Release synapse-operator v1.0.0
 type: application
+# Bumped: --resolve-backend-endpoints defaults ON. Requires a synapse build
+# with the atomic reload-publication fix; see values.yaml.
 version: 1.5.0
 appVersion: "0.1.8"
 home: https://gen0sec.com

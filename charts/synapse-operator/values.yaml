@@ -81,16 +81,25 @@ operator:
   # through cluster DNS on every request. Avoids per-request CoreDNS
   # latency for in-cluster destinations.
   resolveBackendClusterIPs: false
-  # Render the READY pod IPs from EndpointSlices as the server list, instead
-  # of a single Service address. Pod IPs are literals, so synapse never
-  # resolves DNS for them — which removes the stale-address window entirely:
-  # a Service FQDN is otherwise pinned by synapse's in-process DNS cache
-  # (first A record, TTL-bounded, not evicted on a failed re-resolve), so a
-  # replaced pod can keep receiving traffic long after it is gone. Falls back
-  # to ClusterIP/FQDN when the endpoint set is missing or empty, so scaling a
-  # backend to zero never blanks the route. Requires the endpointslices RBAC
-  # rule (granted by this chart's ClusterRole).
-  resolveBackendEndpoints: false
+  # Default ON from synapse chart 0.5.0. Renders the READY pod IPs from
+  # EndpointSlices as the server list instead of a single Service address,
+  # so the proxy connects straight to pods and a replaced pod is picked up
+  # on the next render rather than after synapse's DNS-cache TTL.
+  #
+  # REQUIRES a synapse build carrying the atomic reload-publication fix.
+  # Endpoint rendering re-renders on pod churn, so a rollout that used to
+  # produce no reloads now produces one per endpoint event; against an older
+  # proxy that multiplies exposure to a reload race that can 502. If you pin
+  # image.tag to a release older than that fix, set this back to false.
+  #
+  # Also strongly prefers the config-sync sidecar. In central mode every
+  # re-render is a ConfigMap write, and without the sidecar each one waits
+  # out kubelet's mount sync (~1m) - you pay the churn without the
+  # freshness. See examples/config-sync-values.yaml.
+  #
+  # Falls back to ClusterIP/FQDN when the endpoint set is missing or empty
+  # (ExternalName, headless, scaled to zero), so a route is never blanked.
+  resolveBackendEndpoints: true
   # Enable the UpstreamsResolver — substitutes Service FQDNs to
   # ClusterIPs in ConfigMaps labelled
   # `synapse.gen0sec.com/resolve-upstreams=true`.
