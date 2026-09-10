@@ -124,9 +124,43 @@ httpRoute:
   hostnames: []
   rules: []
 
+# Credentials. Injected as env vars from a Secret, NOT templated into the
+# config.yaml ConfigMap.
+#
+# Why this exists: anything placed in `synapse.config` is rendered into a
+# ConfigMap, which is readable by anyone with `get configmap` in the
+# namespace, is copied verbatim into the last-applied-configuration
+# annotation, and is returned by `helm get values`. Credentials do not belong
+# there.
+#
+# This works because synapse applies env overrides AFTER parsing config.yaml
+# and assigns unconditionally (cli.rs `apply_env_overrides`), so an env var
+# wins over the file. Leave the corresponding config.yaml fields empty.
+#
+# PREFERRED: manage the Secret out of band (External Secrets, sealed-secrets,
+# Vault) and reference it, so no credential is ever in values:
+#   secrets:
+#     existingSecret: synapse-credentials
+#
+# The Secret's keys must be the env var names synapse reads:
+#   API_KEY, CAPTCHA_SECRET_KEY, CAPTCHA_JWT_SECRET
+secrets:
+  # Reference an externally-managed Secret. Takes precedence over `create`.
+  existingSecret: ""
+  # Render a Secret from the values below. Better than a ConfigMap, but the
+  # credential then lives in your values file - prefer existingSecret.
+  create: false
+  apiKey: ""
+  captchaSecretKey: ""
+  captchaJwtSecret: ""
+  # Any additional env-var-name -> value pairs to include in the Secret.
+  extra: {}
+
 # Synapse configuration files rendered into the ConfigMap.
-# Note: YAML config has higher priority than env vars, so leave values empty
-# if you plan to override via environment variables.
+# Note: env vars WIN over this file. synapse parses config.yaml and then runs
+# apply_env_overrides, which assigns unconditionally - so an env var
+# overrides whatever is set here. Leave credential fields empty and inject
+# them via `secrets` above.
 synapse:
   # Optional: name of a ConfigMap (same namespace) whose `upstreams.yaml`
   # key holds upstreams with their server addresses already resolved to
@@ -291,7 +325,9 @@ synapse:
             servers:
               - "127.0.0.1:8081"
 
-# Environment variable overrides (lowest priority; use only for settings not in config.yaml)
+# Environment variables rendered as literal name/value pairs. These take
+# precedence over config.yaml (see the note above), but they land in the
+# Deployment spec in plaintext - do NOT put credentials here, use `secrets`.
 # SYNAPSE_LOG_FORMAT=json is the chart default so every workload (proxy + agent)
 # emits structured JSON console logs; override per-workload (e.g. proxy.env) to change.
 env:

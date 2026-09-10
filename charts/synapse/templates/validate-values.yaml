@@ -20,3 +20,27 @@ with no hint as to why. Make it a render error with the two ways out.
 {{- if and (include "synapse.autoRedisUrl" .) (dig "passwordFromSecret" "enable" false (.Values.dragonfly | default dict)) }}
 {{- fail "dragonfly.passwordFromSecret.enable is true, so the auto-wired REDIS_URL would connect without credentials. Either set `env.REDIS_URL` to a URL that carries them (redis://:<password>@host:6379/0), or set `redis.autoWire: false` and point `proxy.redis.url` in `synapse.config` at Dragonfly yourself." }}
 {{- end }}
+
+{{- /*
+Credentials templated into config.yaml end up in a ConfigMap, the
+last-applied-configuration annotation, and `helm get values`. Fail rather than
+letting it pass silently - this is exactly the shape that put a production
+api_key in cleartext.
+
+This is a hard fail with an explicit escape hatch, not a warning: Helm has no
+way to emit a warning that anyone reliably sees, so the choice is between
+failing and saying nothing. An install that cannot migrate yet can set
+`allowConfigCredentials: true` to keep rendering, which at least makes the
+exposure a recorded decision rather than an accident.
+*/ -}}
+{{- if not .Values.allowConfigCredentials }}
+{{- $cfg := .Values.synapse.config | default "" }}
+{{- range $field := list "api_key" "secret_key" "jwt_secret" }}
+  {{- range $line := splitList "\n" $cfg }}
+    {{- $t := trim $line }}
+    {{- if and (hasPrefix (printf "%s:" $field) $t) (not (regexMatch (printf "^%s:\\s*(\"\"|''|null)?$" $field) $t)) }}
+      {{- fail (printf "SECURITY: `%s` is set inside synapse.config, which renders into a ConfigMap (world-readable in the namespace, copied into last-applied-configuration, and returned by `helm get values`). Blank it there and inject it via the `secrets` values instead - env vars override config.yaml, so the value still reaches synapse. If you cannot migrate yet, set `allowConfigCredentials: true` to acknowledge the exposure. Offending line: %q" $field $t) }}
+    {{- end }}
+  {{- end }}
+{{- end }}
+{{- end }}
