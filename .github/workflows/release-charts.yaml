@@ -1,0 +1,70 @@
+name: Release Charts
+
+# Releasing is deliberate, not a side effect of merging.
+#
+# Previously three near-identical workflows fired on push to main behind a
+# per-chart path filter, so any merge touching charts/ published whatever
+# version happened to be in Chart.yaml. That makes the version bump the
+# release trigger, which is easy to do by accident in a PR and impossible to
+# stage: you cannot land a chart change and release it later.
+#
+# Now a release happens only when a v* tag is pushed. chart-releaser walks
+# every chart and, with skip_existing, publishes only those whose version has
+# no release yet — so one tag releases exactly the charts whose Chart.yaml
+# version moved since the last one.
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+concurrency:
+  group: helm-chart-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+
+      # A tag can point anywhere. Releasing from a commit that never landed on
+      # main would publish a chart that does not exist on the default branch.
+      - name: Verify the tag is on main
+        run: |
+          git fetch --no-tags origin main
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+            echo "::error::tag $GITHUB_REF_NAME points at $GITHUB_SHA, which is not an ancestor of origin/main"
+            exit 1
+          fi
+          echo "tag $GITHUB_REF_NAME is on main"
+
+      - name: Configure Git
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+
+      - name: Add repositories for dependencies
+        run: |
+          helm repo add valkey https://valkey.io/valkey-helm/
+          helm repo update
+
+      - name: Build chart dependencies
+        run: |
+          for chart in charts/*; do
+            [ -f "$chart/Chart.yaml" ] && helm dependency build "$chart" || true
+          done
+
+      - name: Run chart-releaser
+        uses: helm/chart-releaser-action@v1.6.0
+        with:
+          charts_dir: charts
+          skip_existing: true
+        env:
+          CR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
