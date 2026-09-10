@@ -41,7 +41,11 @@ operator:
   createNamespace: true
   image:
     repository: ghcr.io/gen0sec/synapse-operator
-    tag: "0.1.2"
+    # Must be >= 0.1.11: that is where --config-sync and
+    # --resolve-backend-endpoints were added, and this chart passes
+    # --resolve-backend-endpoints by default. An older image exits 2
+    # on the unknown flag and the operator CrashLoopBackOffs.
+    tag: "0.1.11"
     pullPolicy: IfNotPresent
   # Pull secrets for the operator's own images. Separate from the subcharts'
   # imagePullSecrets: the operator is deployed by THIS chart's templates, not by
