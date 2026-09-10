@@ -1,0 +1,12 @@
+{{- /*
+Renders nothing; exists to fail fast on values that no longer do anything.
+
+Helm silently accepts unknown keys, which is exactly how the valkey bug
+survived: the umbrella set `valkey.enabled: false` for both aliases and got a
+valkey Deployment anyway, because the dependency had no condition. A stale
+`valkey:` block after this migration would fail the same quiet way, so turn
+it into an error with the replacement spelled out.
+*/ -}}
+{{- if .Values.valkey }}
+{{- fail (printf "`valkey` is no longer a dependency of this chart - it was replaced by Dragonfly. Rename the block to `dragonfly` (and note it is now gated: set `dragonfly.enabled: true` to deploy it, which valkey never respected). Offending values: %v" (keys .Values.valkey | sortAlpha)) }}
+{{- end }}

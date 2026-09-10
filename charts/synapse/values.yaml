@@ -356,7 +356,20 @@ tolerations: []
 
 affinity: {}
 
-valkey: {}
+# Optional bundled Redis-compatible store (Dragonfly), for the synapse
+# features that need one. OFF by default: the shipped config points
+# `network.redis.url` at 127.0.0.1, so a bundled store is unused unless you
+# also repoint that URL. Turning it on without doing so just adds a workload.
+#
+# When enabling, point synapse at the rendered Service, e.g.
+#   network.redis.url: "redis://<release>-dragonfly:6379/0"
+#
+# NOTE if you enable `storage`: Dragonfly's default `dbfilename` embeds a
+# timestamp (`dump-{timestamp}`), so every snapshot lands as a NEW file and
+# nothing ever prunes them — there is no retention setting. Pin a static name
+# via extraArgs, e.g. `--dbfilename=dump`, or the volume fills up.
+dragonfly:
+  enabled: false
 
 clamavIntegration:
   enabled: true

@@ -6,13 +6,17 @@ type: application
 # Bumped: initContainers support plus optional RBAC for the operator's
 # config-sync reload sidecar, which delivers upstreams via the Kubernetes
 # API instead of a ConfigMap mount — see templates/configsync-rbac.yaml.
-version: 0.5.0
+version: 0.6.0
 appVersion: "0.7.0"
 
 dependencies:
-  - name: valkey
-    version: 0.7.7
-    repository: https://valkey.io/valkey-helm/
+  - name: dragonfly
+    version: v1.40.1
+    repository: oci://ghcr.io/dragonflydb/dragonfly/helm
+    # Gated, unlike the valkey dependency it replaces. Without a condition a
+    # dependency deploys unconditionally, so `valkey.enabled: false` was
+    # silently ignored and every release got a Redis it did not use.
+    condition: dragonfly.enabled
   - name: clamav
     version: 1.6.82
     repository: oci://registry.gitlab.com/xrow-public/helm-clamav/charts
