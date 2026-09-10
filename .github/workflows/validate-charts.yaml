@@ -1,0 +1,124 @@
+name: Validate Charts
+
+# The repo had no PR-time validation at all — the only workflows were release
+# ones. Now that releasing is gated behind a tag, a broken chart can sit on
+# main unnoticed until someone tags, so the checks have to run earlier.
+on:
+  pull_request:
+    paths:
+      - 'charts/**'
+      - '.github/workflows/validate-charts.yaml'
+  push:
+    branches: [ main ]
+    paths:
+      - 'charts/**'
+  workflow_dispatch:
+
+concurrency:
+  group: validate-charts-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint-and-template:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+
+      - name: Add repositories for dependencies
+        run: |
+          helm repo add valkey https://valkey.io/valkey-helm/
+          helm repo update
+
+      # Only synapse-stack has a tracked Chart.lock. `build` happens to fall
+      # back to resolving when the lock is absent, but that is version-
+      # dependent behaviour, so fall back explicitly rather than rely on it.
+      - name: Build chart dependencies
+        run: |
+          for chart in charts/*/; do
+            [ -f "$chart/Chart.yaml" ] || continue
+            helm dependency build "$chart" || helm dependency update "$chart"
+          done
+
+      - name: helm lint
+        run: |
+          rc=0
+          for chart in charts/*/; do
+            [ -f "$chart/Chart.yaml" ] || continue
+            echo "::group::lint $chart"
+            helm lint "$chart" || rc=1
+            echo "::endgroup::"
+          done
+          exit $rc
+
+      - name: helm template (default values)
+        run: |
+          rc=0
+          for chart in charts/*/; do
+            [ -f "$chart/Chart.yaml" ] || continue
+            echo "::group::template $chart"
+            helm template release-name "$chart" >/dev/null || rc=1
+            echo "::endgroup::"
+          done
+          exit $rc
+
+      # Overlays are the configurations people actually deploy, and they use
+      # value paths the defaults never exercise. Globbed rather than listed so
+      # a new overlay is covered without touching this workflow.
+      - name: helm template (example overlays)
+        run: |
+          rc=0
+          shopt -s nullglob
+          found=0
+          for chart in charts/*/; do
+            [ -f "$chart/Chart.yaml" ] || continue
+            for values in "$chart"examples/*.yaml; do
+              found=1
+              echo "::group::template $chart -f $values"
+              helm template release-name "$chart" -f "$values" >/dev/null || rc=1
+              echo "::endgroup::"
+            done
+          done
+          [ "$found" = 1 ] || echo "no example overlays found"
+          exit $rc
+
+  version-bumped:
+    # Releases are tag-driven and chart-releaser skips versions that already
+    # have a release, so an unbumped chart is published as SILENCE: the tag
+    # succeeds and ships nothing. Catch it at review time instead.
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+
+      - name: Require a Chart.yaml version bump for every changed chart
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          rc=0
+          for chart in charts/*/; do
+            name=$(basename "$chart")
+            [ -f "$chart/Chart.yaml" ] || continue
+
+            if git diff --quiet "$BASE" "$HEAD" -- "$chart"; then
+              continue          # chart untouched
+            fi
+
+            new=$(git show "$HEAD:${chart}Chart.yaml" | awk '/^version:/{print $2; exit}')
+            if ! old=$(git show "$BASE:${chart}Chart.yaml" 2>/dev/null | awk '/^version:/{print $2; exit}'); then
+              echo "new chart $name at $new"
+              continue          # chart added in this PR
+            fi
+
+            if [ "$old" = "$new" ]; then
+              echo "::error file=${chart}Chart.yaml::$name changed but version is still $old - bump it, or the release tag will skip this chart"
+              rc=1
+            else
+              echo "$name $old -> $new"
+            fi
+          done
+          exit $rc
