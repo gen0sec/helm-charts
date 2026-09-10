@@ -1,0 +1,137 @@
+{{- if .Values.clamavIntegration.enabled }}
+{{- /*
+clamd is templated here rather than pulled in as a subchart.
+
+The previous dependency (xrow-public/helm-clamav) could not produce a healthy
+clamd through values alone: its ConfigMap hardcodes
+
+    DatabaseDirectory /opt/app-root/src
+
+an OpenShift app-root path, while freshclam writes signatures to
+/var/lib/clamav. clamd then aborts with "cl_load: No such file or directory"
+and never opens its socket, so freshclam loops on "socket not found" forever.
+The subchart's `settings:` only exposes `debug`, so the path is unreachable -
+and because it is re-rendered on every upgrade, a working cluster silently
+re-breaks on the next clamd restart.
+
+Owning ~60 lines of manifest is cheaper than carrying a post-render step, and
+drops a third-party OCI registry from the dependency graph.
+*/ -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "synapse.fullname" . }}-clamav
+  labels:
+    {{- include "synapse.labels" . | nindent 4 }}
+    app.kubernetes.io/component: clamav
+data:
+  clamd.conf: |
+    LogFile /dev/null
+    LogVerbose {{ ternary "yes" "no" .Values.clamav.debug }}
+    # Where freshclam actually writes in this image. The path the old
+    # subchart used does not exist here.
+    DatabaseDirectory /var/lib/clamav
+    LocalSocket /run/clamav/clamd.sock
+    PidFile /run/clamav/clamd.pid
+    TCPAddr 0.0.0.0
+    TCPSocket {{ .Values.clamav.service.port }}
+    StreamMaxLength {{ .Values.clamav.streamMaxLength }}
+    Foreground yes
+    Debug {{ ternary "yes" "no" .Values.clamav.debug }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "synapse.fullname" . }}-clamav
+  labels:
+    {{- include "synapse.labels" . | nindent 4 }}
+    app.kubernetes.io/component: clamav
+spec:
+  type: ClusterIP
+  ports:
+    - name: clamd
+      port: {{ .Values.clamav.service.port }}
+      targetPort: clamd
+      protocol: TCP
+  selector:
+    {{- include "synapse.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: clamav
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "synapse.fullname" . }}-clamav
+  labels:
+    {{- include "synapse.labels" . | nindent 4 }}
+    app.kubernetes.io/component: clamav
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "synapse.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: clamav
+  template:
+    metadata:
+      labels:
+        {{- include "synapse.labels" . | nindent 8 }}
+        app.kubernetes.io/component: clamav
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: clamav
+          image: "{{ .Values.clamav.image.registry }}/{{ .Values.clamav.image.repository }}:{{ .Values.clamav.image.tag }}"
+          imagePullPolicy: {{ .Values.clamav.image.pullPolicy }}
+          # This image starts as root and drops privileges in its own
+          # entrypoint, so runAsNonRoot makes the kubelet refuse it outright,
+          # and dropping ALL breaks the entrypoint's chown of /run/clamav
+          # ("Operation not permitted").
+          securityContext:
+            {{- toYaml .Values.clamav.securityContext | nindent 12 }}
+          ports:
+            - name: clamd
+              containerPort: {{ .Values.clamav.service.port }}
+              protocol: TCP
+          # A cold signature load takes minutes. Too short a startupProbe and
+          # the kubelet SIGKILLs clamd (exit 137) just as it finishes, which
+          # looks like a crashloop rather than a slow start.
+          startupProbe:
+            tcpSocket: { port: clamd }
+            {{- toYaml .Values.clamav.startupProbe | nindent 12 }}
+          livenessProbe:
+            tcpSocket: { port: clamd }
+            {{- toYaml .Values.clamav.livenessProbe | nindent 12 }}
+          readinessProbe:
+            tcpSocket: { port: clamd }
+            {{- toYaml .Values.clamav.readinessProbe | nindent 12 }}
+          {{- with .Values.clamav.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: config
+              mountPath: /etc/clamav/clamd.conf
+              subPath: clamd.conf
+            - name: signatures
+              mountPath: /var/lib/clamav
+            - name: run
+              mountPath: /run/clamav
+      volumes:
+        - name: config
+          configMap:
+            name: {{ include "synapse.fullname" . }}-clamav
+        - name: signatures
+          {{- toYaml .Values.clamav.signatureVolume | nindent 10 }}
+        - name: run
+          emptyDir: {}
+      {{- with .Values.clamav.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.clamav.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}

@@ -380,3 +380,45 @@ clamav:
     repository: clamav/clamav-debian
     tag: "1.5.1"
     pullPolicy: IfNotPresent
+
+  # The image starts as root and drops privileges in its own entrypoint.
+  # runAsNonRoot makes the kubelet refuse the container outright
+  # ("container has runAsNonRoot and image will run as root"), and dropping
+  # ALL capabilities breaks the entrypoint's chown of /run/clamav
+  # ("cannot change owner and permissions of '/run/clamav'").
+  securityContext:
+    runAsUser: 0
+    runAsNonRoot: false
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop: ["ALL"]
+      add: ["CHOWN", "DAC_OVERRIDE", "SETUID", "SETGID"]
+
+  service:
+    port: 3310
+
+  # Loading the signature set on a cold start is slow, and a startupProbe
+  # that expires mid-load gets clamd SIGKILLed (exit 137) right as it
+  # finishes - which reads as a crashloop rather than a slow start.
+  # 90 x 10s = 15 minutes of grace; liveness only applies afterwards.
+  startupProbe:
+    periodSeconds: 10
+    failureThreshold: 90
+  livenessProbe:
+    periodSeconds: 30
+    failureThreshold: 3
+  readinessProbe:
+    periodSeconds: 10
+    failureThreshold: 3
+
+  # Signature database. emptyDir means a full re-download on every restart
+  # (a few hundred MB); swap for a PVC if that matters.
+  signatureVolume:
+    emptyDir: {}
+
+  streamMaxLength: 1000M
+  debug: false
+
+  resources: {}
+  nodeSelector: {}
+  tolerations: []
