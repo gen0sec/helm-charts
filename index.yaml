@@ -466,6 +466,21 @@ entries:
   synapse:
   - apiVersion: v2
     appVersion: 0.7.0
+    created: "2026-09-10T19:58:19.067519228Z"
+    dependencies:
+    - condition: dragonfly.enabled
+      name: dragonfly
+      repository: oci://ghcr.io/dragonflydb/dragonfly/helm
+      version: v1.40.1
+    description: A Helm chart for Synapse reverse proxy with security features
+    digest: 0a0fb8b70d85a713273bbc716352efbd7f43011aee9a03d5782b9979a930bc6e
+    name: synapse
+    type: application
+    urls:
+    - https://github.com/gen0sec/helm-charts/releases/download/synapse-0.7.0/synapse-0.7.0.tgz
+    version: 0.7.0
+  - apiVersion: v2
+    appVersion: 0.7.0
     created: "2026-09-10T17:10:12.329752985Z"
     dependencies:
     - name: valkey
@@ -800,6 +815,43 @@ entries:
     - https://github.com/gen0sec/helm-charts/releases/download/synapse-operator-1.0.7/synapse-operator-1.0.7.tgz
     version: 1.0.7
   synapse-stack:
+  - apiVersion: v2
+    appVersion: 0.7.0
+    created: "2026-09-10T19:58:19.317699352Z"
+    dependencies:
+    - alias: proxy
+      condition: proxy.enabled
+      name: synapse
+      repository: file://../synapse
+      version: 0.7.0
+    - alias: agent
+      condition: agent.enabled
+      name: synapse
+      repository: file://../synapse
+      version: 0.7.0
+    description: Umbrella chart that installs the Synapse dataplane together with
+      the Synapse operator
+    digest: c834b3ffa8f55e74f50657babb40be05aa999d2d2fdecac15e8cf8b8a6554bff
+    home: https://gen0sec.com
+    icon: https://raw.githubusercontent.com/gen0sec/helm-charts/main/images/logo.png
+    keywords:
+    - synapse
+    - operator
+    - kubernetes
+    - security
+    - proxy
+    - firewall
+    maintainers:
+    - email: support@gen0sec.com
+      name: Gen0Sec
+    name: synapse-stack
+    sources:
+    - https://github.com/gen0sec/synapse
+    - https://github.com/gen0sec/synapse-operator
+    type: application
+    urls:
+    - https://github.com/gen0sec/helm-charts/releases/download/synapse-stack-0.8.0/synapse-stack-0.8.0.tgz
+    version: 0.8.0
   - apiVersion: v2
     appVersion: 0.7.0
     created: "2026-09-10T17:10:12.744527591Z"
@@ -1269,4 +1321,4 @@ entries:
     urls:
     - https://github.com/gen0sec/helm-charts/releases/download/synapse-stack-0.1.1/synapse-stack-0.1.1.tgz
     version: 0.1.1
-generated: "2026-09-10T17:10:12.744677082Z"
+generated: "2026-09-10T19:58:19.317888652Z"
