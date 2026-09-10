@@ -44,3 +44,20 @@ exposure a recorded decision rather than an accident.
   {{- end }}
 {{- end }}
 {{- end }}
+
+{{- /*
+NetVarsResolver reads and rewrites config.yaml in a ConfigMap only
+(netvars_resolver.go: `var cm corev1.ConfigMap` ... `r.Update(ctx, &cm)`).
+With config.yaml in a Secret it finds nothing to rewrite and silently stops
+filling ids.address_vars.HOME_NET/EXTERNAL_NET.
+
+That is not cosmetic: HOME_NET is what keeps inline IDS blocking from banning
+an internal or cluster source IP. Failing beats discovering it from a banned
+node, so refuse the combination.
+*/ -}}
+{{- if .Values.synapse.configSecret }}
+  {{- $labels := .Values.configMapExtraLabels | default dict }}
+  {{- if eq (toString (index $labels "synapse.gen0sec.com/resolve-netvars")) "true" }}
+    {{- fail "`synapse.configSecret` cannot be combined with the `synapse.gen0sec.com/resolve-netvars` label: the operator's NetVarsResolver only reads and rewrites config.yaml inside a ConfigMap, so with config.yaml in a Secret it would silently stop filling ids.address_vars.HOME_NET/EXTERNAL_NET - and an unfilled HOME_NET lets inline IDS blocking ban internal source IPs. Either leave configSecret off, or drop the resolve-netvars label and set HOME_NET explicitly." }}
+  {{- end }}
+{{- end }}
