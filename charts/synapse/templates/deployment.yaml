@@ -96,6 +96,15 @@ spec:
               value: {{ $value | quote }}
             {{- end }}
           {{- end }}
+          {{- if or .Values.secrets.existingSecret .Values.secrets.create }}
+          # Credentials arrive as env vars from a Secret. synapse applies env
+          # overrides AFTER parsing config.yaml and assigns unconditionally
+          # (cli.rs apply_env_overrides), so these win over anything in the
+          # ConfigMap - which is what lets the ConfigMap stay free of them.
+          envFrom:
+            - secretRef:
+                name: {{ .Values.secrets.existingSecret | default (printf "%s-credentials" (include "synapse.fullname" .)) }}
+          {{- end }}
           {{- with .Values.livenessProbe }}
           livenessProbe:
             {{- toYaml . | nindent 12 }}
