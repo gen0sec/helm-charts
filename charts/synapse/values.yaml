@@ -176,6 +176,28 @@ synapse:
   # When empty (default) the proxy mounts the chart's ConfigMap as-is
   # (hostname upstreams; the in-proxy dns_cache handles resolution).
   upstreamsConfigMap: ""
+
+  # Render config.yaml into a Secret instead of a ConfigMap.
+  #
+  # The `secrets` block above only reaches fields synapse exposes an env
+  # override for. It does NOT reach the three `headers` maps - telemetry
+  # exporter, geoip sources (country/asn/city), threat/download source -
+  # which exist to carry per-endpoint credentials
+  # (`Authorization: "Bearer ..."`). Those have no env override, and
+  # config.yaml has no ${VAR} interpolation, so a per-endpoint key can only be
+  # written into the file. Set this when any of them carries a credential.
+  #
+  # synapse reads a path and does not care whether the bytes come from a
+  # ConfigMap or a Secret, so this needs no synapse change. upstreams.yaml is
+  # not sensitive and stays a ConfigMap so the operator can keep owning it.
+  #
+  # INCOMPATIBLE with the operator's NetVarsResolver, which reads and rewrites
+  # config.yaml in a ConfigMap only (netvars_resolver.go takes a
+  # corev1.ConfigMap). With this on, HOME_NET/EXTERNAL_NET auto-fill stops -
+  # which matters, because that is what keeps inline IDS blocking from banning
+  # an internal source IP. The chart refuses the combination rather than
+  # letting it fail quietly.
+  configSecret: false
   config: |
     mode: "proxy"
 

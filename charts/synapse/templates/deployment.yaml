@@ -129,7 +129,27 @@ spec:
         {{- end }}
       volumes:
         - name: config
-          {{- if .Values.synapse.upstreamsConfigMap }}
+          {{- if .Values.synapse.configSecret }}
+          # config.yaml comes from a Secret (credentials in `headers` maps
+          # have no env override, so the file itself must not be a ConfigMap).
+          # upstreams.yaml is not sensitive and stays a ConfigMap so the
+          # operator can keep owning it.
+          projected:
+            sources:
+              - secret:
+                  name: {{ include "synapse.fullname" . }}-config
+                  items:
+                    - key: config.yaml
+                      path: config.yaml
+              {{- if or .Values.synapse.upstreamsConfigMap .Values.synapse.upstreams }}
+              - configMap:
+                  name: {{ .Values.synapse.upstreamsConfigMap | default (include "synapse.fullname" .) }}
+                  optional: true
+                  items:
+                    - key: upstreams.yaml
+                      path: upstreams.yaml
+              {{- end }}
+          {{- else if .Values.synapse.upstreamsConfigMap }}
           # Take config.yaml from the chart ConfigMap but upstreams.yaml from
           # the operator-resolved (ClusterIP) ConfigMap. Projected, not
           # subPath, so both keys keep updating live on a ConfigMap change.
