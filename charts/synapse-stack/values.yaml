@@ -31,6 +31,10 @@ agent:
   # IDS HOME_NET/EXTERNAL_NET (requires operator.netvarsResolver: true).
   configMapExtraLabels:
     synapse.gen0sec.com/resolve-netvars: "true"
+  # The agent is an XDP DaemonSet: it has no content-scanning path and no
+  # Redis-backed features, so neither store nor scanner is ever reachable
+  # from it. Both are off by default now; kept explicit here so aliasing
+  # cannot reintroduce them.
   clamavIntegration:
     enabled: false
   dragonfly:

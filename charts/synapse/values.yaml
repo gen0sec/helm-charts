@@ -371,8 +371,16 @@ affinity: {}
 dragonfly:
   enabled: false
 
+# Deploy a bundled clamd for `proxy.content_scanning`. OFF by default: the
+# shipped config sets `content_scanning.enabled: false`, so a default install
+# would run a clamd nothing talks to. The agent never has a content-scanning
+# path at all.
+#
+# Turn this on together with `content_scanning.enabled` in `synapse.config`,
+# and point `content_scanning.clamav_server` at the rendered Service:
+#   clamav_server: "<release>-synapse-clamav:3310"
 clamavIntegration:
-  enabled: true
+  enabled: false
 
 clamav:
   image:
