@@ -1,450 +1,9 @@
 apiVersion: v1
 entries:
-  moat:
-  - apiVersion: v2
-    appVersion: 0.1.4
-    created: "2025-11-11T21:15:22.26335745Z"
-    dependencies:
-    - name: valkey
-      repository: https://valkey.io/valkey-helm/
-      version: 0.7.7
-    - condition: clamavIntegration.enabled
-      name: clamav
-      repository: oci://registry.gitlab.com/xrow-public/helm-clamav/charts
-      version: 1.6.82
-    description: A Helm chart for Moat reverse proxy with security features
-    digest: b0df08bf9dd288a261df29d8832e600f13aa3f9ea28e644237921b0b6dcf7555
-    name: moat
-    type: application
-    urls:
-    - https://github.com/arxignis/helm-charts/releases/download/moat-1.2.2/moat-1.2.2.tgz
-    version: 1.2.2
-  - apiVersion: v2
-    appVersion: 0.1.4
-    created: "2025-11-11T11:50:23.040388051Z"
-    dependencies:
-    - name: valkey
-      repository: https://valkey.io/valkey-helm/
-      version: 0.7.7
-    - name: clamav
-      repository: oci://registry.gitlab.com/xrow-public/helm-clamav/charts
-      version: 1.6.82
-    description: A Helm chart for Moat reverse proxy with security features
-    digest: dffd70f3bcfb11a72dbce096faa5c47dffae1c03ff29e49c54a445b7f5ce7cfd
-    name: moat
-    type: application
-    urls:
-    - https://github.com/arxignis/helm-charts/releases/download/moat-1.2.1/moat-1.2.1.tgz
-    version: 1.2.1
-  - apiVersion: v2
-    appVersion: 0.0.7
-    created: "2025-11-10T21:53:20.239699485Z"
-    dependencies:
-    - name: valkey
-      repository: https://valkey.io/valkey-helm/
-      version: 0.7.7
-    - name: clamav
-      repository: oci://registry.gitlab.com/xrow-public/helm-clamav/charts
-      version: 1.6.82
-    description: A Helm chart for Moat reverse proxy with security features
-    digest: d2ccb5e84863d9c279abcaf99ccdad0943fd39807358053eca3e191ed4d42fd4
-    name: moat
-    type: application
-    urls:
-    - https://github.com/arxignis/helm-charts/releases/download/moat-1.2.0/moat-1.2.0.tgz
-    version: 1.2.0
-  - apiVersion: v2
-    appVersion: 0.0.7
-    created: "2025-11-10T16:47:15.361625628Z"
-    dependencies:
-    - name: valkey
-      repository: https://valkey.io/valkey-helm/
-      version: 0.7.7
-    - name: clamav
-      repository: oci://registry.gitlab.com/xrow-public/helm-clamav/charts
-      version: 1.6.82
-    description: A Helm chart for Moat reverse proxy with security features
-    digest: 7b6b0227038851ab709cd850d604d5b27a15d18ad3b0578c07557bf3c9873e16
-    name: moat
-    type: application
-    urls:
-    - https://github.com/arxignis/helm-charts/releases/download/moat-1.1.2/moat-1.1.2.tgz
-    version: 1.1.2
-  - apiVersion: v2
-    appVersion: 0.0.7
-    created: "2025-11-10T16:43:12.639890813Z"
-    dependencies:
-    - name: valkey
-      repository: https://valkey.io/valkey-helm/
-      version: 0.7.7
-    - name: clamav
-      repository: oci://registry.gitlab.com/xrow-public/helm-clamav/charts
-      version: 1.6.82
-    description: A Helm chart for Moat reverse proxy with security features
-    digest: 3bed864028ade31639a5bb53459aefa19483f13393b8100ab979936da2c92986
-    name: moat
-    type: application
-    urls:
-    - https://github.com/arxignis/helm-charts/releases/download/moat-1.1.1/moat-1.1.1.tgz
-    version: 1.1.1
-  - apiVersion: v2
-    appVersion: 0.0.7
-    created: "2025-11-10T16:37:15.247362396Z"
-    dependencies:
-    - name: valkey
-      repository: https://valkey.io/valkey-helm/
-      version: 0.7.7
-    - name: clamav
-      repository: oci://registry.gitlab.com/xrow-public/helm-clamav/charts
-      version: 1.6.82
-    description: A Helm chart for Moat reverse proxy with security features
-    digest: 1be82e19243468825ba7968e4e54f9e738b6effb0e4c81042c40406dd5d7a75c
-    name: moat
-    type: application
-    urls:
-    - https://github.com/arxignis/helm-charts/releases/download/moat-1.0.10/moat-1.0.10.tgz
-    version: 1.0.10
-  - apiVersion: v2
-    appVersion: 0.0.7
-    created: "2025-11-04T15:58:15.413973117Z"
-    dependencies:
-    - name: valkey
-      repository: https://valkey.io/valkey-helm/
-      version: 0.7.7
-    - name: clamav
-      repository: oci://registry.gitlab.com/xrow-public/helm-clamav/charts
-      version: 1.6.82
-    description: A Helm chart for Moat reverse proxy with security features
-    digest: 8dc42a0ccf770400bd7f94103b72ba4c55d648fdca022899c02914170ed2ab5a
-    name: moat
-    type: application
-    urls:
-    - https://github.com/arxignis/helm-charts/releases/download/moat-1.0.9/moat-1.0.9.tgz
-    version: 1.0.9
-  - apiVersion: v2
-    appVersion: 0.0.7
-    created: "2025-11-04T13:17:11.48395516Z"
-    dependencies:
-    - name: valkey
-      repository: https://valkey.io/valkey-helm/
-      version: 0.7.7
-    - name: clamav
-      repository: oci://registry.gitlab.com/xrow-public/helm-clamav/charts
-      version: 1.6.82
-    description: A Helm chart for Moat reverse proxy with security features
-    digest: 56c42aadabbef6f3c5501fd8c5a81871fc1dc614a6551fc98f18c1c2daf65fef
-    name: moat
-    type: application
-    urls:
-    - https://github.com/arxignis/helm-charts/releases/download/moat-1.0.4/moat-1.0.4.tgz
-    version: 1.0.4
-  - apiVersion: v2
-    appVersion: 0.0.7
-    created: "2025-11-10T16:23:26.71659836Z"
-    dependencies:
-    - name: valkey
-      repository: https://valkey.io/valkey-helm/
-      version: 0.7.7
-    - name: clamav
-      repository: oci://registry.gitlab.com/xrow-public/helm-clamav/charts
-      version: 1.6.82
-    description: A Helm chart for Moat reverse proxy with security features
-    digest: 7edc13fd779e89b4e47a49e122f486e759610521c217b16fc6a63d02298a81a9
-    name: moat
-    type: application
-    urls:
-    - https://github.com/arxignis/helm-charts/releases/download/moat-0.1.2/moat-0.1.2.tgz
-    version: 0.1.2
-  moat-operator:
-  - apiVersion: v2
-    appVersion: 1.0.0
-    created: "2025-11-04T15:58:15.681555389Z"
-    description: Helm chart for the Moat Kubernetes operator
-    digest: 508f9543b48d0919f79d05952bac83743ef079fbbb50b37c038403a9350fe90b
-    home: https://arxignis.com
-    icon: https://raw.githubusercontent.com/arxignis/helm-charts/main/images/logo.png
-    keywords:
-    - moat
-    - operator
-    - kubernetes
-    - security
-    maintainers:
-    - email: support@arxignis.com
-      name: Arxignis
-    name: moat-operator
-    sources:
-    - https://github.com/arxignis/moat-operator
-    type: application
-    urls:
-    - https://github.com/arxignis/helm-charts/releases/download/moat-operator-1.0.5/moat-operator-1.0.5.tgz
-    version: 1.0.5
-  - apiVersion: v2
-    appVersion: 1.0.0
-    created: "2025-11-04T13:17:11.641938289Z"
-    description: Helm chart for the Moat Kubernetes operator
-    digest: 893c7f63d416fd27c6839a0773c6d50b513f684e8115e35f004ed6d142d68aa2
-    home: https://arxignis.com
-    icon: https://raw.githubusercontent.com/arxignis/helm-charts/main/images/logo.png
-    keywords:
-    - moat
-    - operator
-    - kubernetes
-    - security
-    maintainers:
-    - email: support@arxignis.com
-      name: Arxignis
-    name: moat-operator
-    sources:
-    - https://github.com/arxignis/moat-operator
-    type: application
-    urls:
-    - https://github.com/arxignis/helm-charts/releases/download/moat-operator-1.0.4/moat-operator-1.0.4.tgz
-    version: 1.0.4
-  moat-stack:
-  - apiVersion: v2
-    appVersion: 0.1.0
-    created: "2025-11-11T11:55:51.425435074Z"
-    dependencies:
-    - name: moat
-      repository: file://../moat
-      version: 1.2.1
-    description: Umbrella chart that installs the Moat dataplane together with the
-      Moat operator
-    digest: e789f2b21003ee06def34ea4b11540c9668b6e65ae5f8c73b1dc8b833004c4d1
-    home: https://arxignis.com
-    icon: https://raw.githubusercontent.com/arxignis/helm-charts/main/images/logo.png
-    keywords:
-    - moat
-    - operator
-    - kubernetes
-    - security
-    - proxy
-    - firewall
-    maintainers:
-    - email: support@arxignis.com
-      name: Arxignis
-    name: moat-stack
-    sources:
-    - https://github.com/arxignis/moat
-    - https://github.com/arxignis/moat-operator
-    type: application
-    urls:
-    - https://github.com/arxignis/helm-charts/releases/download/moat-stack-0.2.1/moat-stack-0.2.1.tgz
-    version: 0.2.1
-  - apiVersion: v2
-    appVersion: 0.1.0
-    created: "2025-11-10T21:53:20.41086898Z"
-    dependencies:
-    - name: moat
-      repository: file://../moat
-      version: 1.2.0
-    description: Umbrella chart that installs the Moat dataplane together with the
-      Moat operator
-    digest: 5b1db6df4cf858fd61a7e141ab1bf02270d87667af2026027e431122f3cddb1c
-    home: https://arxignis.com
-    icon: https://raw.githubusercontent.com/arxignis/helm-charts/main/images/logo.png
-    keywords:
-    - moat
-    - operator
-    - kubernetes
-    - security
-    - proxy
-    - firewall
-    maintainers:
-    - email: support@arxignis.com
-      name: Arxignis
-    name: moat-stack
-    sources:
-    - https://github.com/arxignis/moat
-    - https://github.com/arxignis/moat-operator
-    type: application
-    urls:
-    - https://github.com/arxignis/helm-charts/releases/download/moat-stack-0.2.0/moat-stack-0.2.0.tgz
-    version: 0.2.0
-  - apiVersion: v2
-    appVersion: 0.1.0
-    created: "2025-11-10T16:47:15.616101792Z"
-    dependencies:
-    - name: moat
-      repository: file://../moat
-      version: 1.1.2
-    description: Umbrella chart that installs the Moat dataplane together with the
-      Moat operator
-    digest: d5ea7b2e95aedd4876ab1392c454d083c808d922f866018b1f01501cd182a4ce
-    home: https://arxignis.com
-    icon: https://raw.githubusercontent.com/arxignis/helm-charts/main/images/logo.png
-    keywords:
-    - moat
-    - operator
-    - kubernetes
-    - security
-    - proxy
-    - firewall
-    maintainers:
-    - email: support@arxignis.com
-      name: Arxignis
-    name: moat-stack
-    sources:
-    - https://github.com/arxignis/moat
-    - https://github.com/arxignis/moat-operator
-    type: application
-    urls:
-    - https://github.com/arxignis/helm-charts/releases/download/moat-stack-0.1.7/moat-stack-0.1.7.tgz
-    version: 0.1.7
-  - apiVersion: v2
-    appVersion: 0.1.0
-    created: "2025-11-10T16:43:12.860440196Z"
-    dependencies:
-    - name: moat
-      repository: file://../moat
-      version: 1.1.1
-    description: Umbrella chart that installs the Moat dataplane together with the
-      Moat operator
-    digest: 33ba2750b014147fbd8e0b3f7d654502acfecaf06af36b14a0546bf6186e05e0
-    home: https://arxignis.com
-    icon: https://raw.githubusercontent.com/arxignis/helm-charts/main/images/logo.png
-    keywords:
-    - moat
-    - operator
-    - kubernetes
-    - security
-    - proxy
-    - firewall
-    maintainers:
-    - email: support@arxignis.com
-      name: Arxignis
-    name: moat-stack
-    sources:
-    - https://github.com/arxignis/moat
-    - https://github.com/arxignis/moat-operator
-    type: application
-    urls:
-    - https://github.com/arxignis/helm-charts/releases/download/moat-stack-0.1.6/moat-stack-0.1.6.tgz
-    version: 0.1.6
-  - apiVersion: v2
-    appVersion: 0.1.0
-    created: "2025-11-10T16:37:15.446338659Z"
-    dependencies:
-    - name: moat
-      repository: file://../moat
-      version: 1.0.10
-    description: Umbrella chart that installs the Moat dataplane together with the
-      Moat operator
-    digest: 70fa02a6dd9cc41dfc9207b9c7b926cd039a82167bab5a30e4fd39c58cab6762
-    home: https://arxignis.com
-    icon: https://raw.githubusercontent.com/arxignis/helm-charts/main/images/logo.png
-    keywords:
-    - moat
-    - operator
-    - kubernetes
-    - security
-    - proxy
-    - firewall
-    maintainers:
-    - email: support@arxignis.com
-      name: Arxignis
-    name: moat-stack
-    sources:
-    - https://github.com/arxignis/moat
-    - https://github.com/arxignis/moat-operator
-    type: application
-    urls:
-    - https://github.com/arxignis/helm-charts/releases/download/moat-stack-0.1.5/moat-stack-0.1.5.tgz
-    version: 0.1.5
-  - apiVersion: v2
-    appVersion: 0.1.0
-    created: "2025-11-10T16:23:26.945425772Z"
-    dependencies:
-    - name: moat
-      repository: file://../moat
-      version: 0.1.2
-    description: Umbrella chart that installs the Moat dataplane together with the
-      Moat operator
-    digest: 4b76758a550ab4b91510c8ba7093491037414ee22d8f2ef95810fbc49d0fb791
-    home: https://arxignis.com
-    icon: https://raw.githubusercontent.com/arxignis/helm-charts/main/images/logo.png
-    keywords:
-    - moat
-    - operator
-    - kubernetes
-    - security
-    - proxy
-    - firewall
-    maintainers:
-    - email: support@arxignis.com
-      name: Arxignis
-    name: moat-stack
-    sources:
-    - https://github.com/arxignis/moat
-    - https://github.com/arxignis/moat-operator
-    type: application
-    urls:
-    - https://github.com/arxignis/helm-charts/releases/download/moat-stack-0.1.4/moat-stack-0.1.4.tgz
-    version: 0.1.4
-  - apiVersion: v2
-    appVersion: 0.1.0
-    created: "2025-11-04T15:58:15.977451378Z"
-    dependencies:
-    - name: moat
-      repository: file://../moat
-      version: 1.0.9
-    description: Umbrella chart that installs the Moat dataplane together with the
-      Moat operator
-    digest: 1773927a0dfe5109739b2bffffdba01a2436e946900dd1fd13c2edf226275c97
-    home: https://arxignis.com
-    icon: https://raw.githubusercontent.com/arxignis/helm-charts/main/images/logo.png
-    keywords:
-    - moat
-    - operator
-    - kubernetes
-    - security
-    - proxy
-    - firewall
-    maintainers:
-    - email: support@arxignis.com
-      name: Arxignis
-    name: moat-stack
-    sources:
-    - https://github.com/arxignis/moat
-    - https://github.com/arxignis/moat-operator
-    type: application
-    urls:
-    - https://github.com/arxignis/helm-charts/releases/download/moat-stack-0.1.3/moat-stack-0.1.3.tgz
-    version: 0.1.3
-  - apiVersion: v2
-    appVersion: 0.1.0
-    created: "2025-11-04T13:13:44.48959103Z"
-    dependencies:
-    - name: moat
-      repository: file://../moat
-      version: 1.0.0
-    description: Umbrella chart that installs the Moat dataplane together with the
-      Moat operator
-    digest: 2e59b2573b13af7f30a4ff90ca4c21b36fee6ad33c6e8016eec50d395cc65733
-    home: https://arxignis.com
-    icon: https://raw.githubusercontent.com/arxignis/helm-charts/main/images/logo.png
-    keywords:
-    - moat
-    - operator
-    - kubernetes
-    - security
-    - proxy
-    - firewall
-    maintainers:
-    - email: support@arxignis.com
-      name: Arxignis
-    name: moat-stack
-    sources:
-    - https://github.com/arxignis/moat
-    - https://github.com/arxignis/moat-operator
-    type: application
-    urls:
-    - https://github.com/arxignis/helm-charts/releases/download/moat-stack-0.1.2/moat-stack-0.1.2.tgz
-    version: 0.1.2
   ssl-storage:
   - apiVersion: v2
     appVersion: 0.0.1
-    created: "2025-11-10T10:18:52.335388386Z"
+    created: '2025-11-10T10:18:52.335388386Z'
     description: Helm chart for deploying the SSL Storage ACME/Let's Encrypt certificate
       manager service
     digest: ea734e86edd332a728e9626b0a06badad8fe1ed6f57f2309ffa0d2b065e9f46f
@@ -466,7 +25,7 @@ entries:
   synapse:
   - apiVersion: v2
     appVersion: 0.7.0
-    created: "2026-09-10T19:58:19.067519228Z"
+    created: '2026-09-10T19:58:19.067519228Z'
     dependencies:
     - condition: dragonfly.enabled
       name: dragonfly
@@ -481,7 +40,7 @@ entries:
     version: 0.7.0
   - apiVersion: v2
     appVersion: 0.7.0
-    created: "2026-09-10T17:10:12.329752985Z"
+    created: '2026-09-10T17:10:12.329752985Z'
     dependencies:
     - name: valkey
       repository: https://valkey.io/valkey-helm/
@@ -499,7 +58,7 @@ entries:
     version: 0.5.0
   - apiVersion: v2
     appVersion: 0.7.0
-    created: "2026-09-10T11:46:03.236842567Z"
+    created: '2026-09-10T11:46:03.236842567Z'
     dependencies:
     - name: valkey
       repository: https://valkey.io/valkey-helm/
@@ -517,7 +76,7 @@ entries:
     version: 0.4.2
   - apiVersion: v2
     appVersion: 0.7.0
-    created: "2026-09-06T19:01:19.690530394Z"
+    created: '2026-09-06T19:01:19.690530394Z'
     dependencies:
     - name: valkey
       repository: https://valkey.io/valkey-helm/
@@ -535,7 +94,7 @@ entries:
     version: 0.4.1
   - apiVersion: v2
     appVersion: 0.7.0
-    created: "2026-06-28T16:04:21.333013629Z"
+    created: '2026-06-28T16:04:21.333013629Z'
     dependencies:
     - name: valkey
       repository: https://valkey.io/valkey-helm/
@@ -553,7 +112,7 @@ entries:
     version: 0.4.0
   - apiVersion: v2
     appVersion: 0.7.0
-    created: "2026-06-19T07:04:21.321714595Z"
+    created: '2026-06-19T07:04:21.321714595Z'
     dependencies:
     - name: valkey
       repository: https://valkey.io/valkey-helm/
@@ -571,7 +130,7 @@ entries:
     version: 0.3.1
   - apiVersion: v2
     appVersion: 0.7.0
-    created: "2026-06-14T17:29:31.596104214Z"
+    created: '2026-06-14T17:29:31.596104214Z'
     dependencies:
     - name: valkey
       repository: https://valkey.io/valkey-helm/
@@ -589,7 +148,7 @@ entries:
     version: 0.3.0
   - apiVersion: v2
     appVersion: 0.7.0
-    created: "2026-06-05T12:44:45.960941171Z"
+    created: '2026-06-05T12:44:45.960941171Z'
     dependencies:
     - name: valkey
       repository: https://valkey.io/valkey-helm/
@@ -607,7 +166,7 @@ entries:
     version: 0.1.4
   - apiVersion: v2
     appVersion: 0.7.0
-    created: "2026-06-02T15:48:20.472773086Z"
+    created: '2026-06-02T15:48:20.472773086Z'
     dependencies:
     - name: valkey
       repository: https://valkey.io/valkey-helm/
@@ -625,7 +184,7 @@ entries:
     version: 0.1.3
   - apiVersion: v2
     appVersion: 0.3.1
-    created: "2026-01-12T15:46:34.521596702Z"
+    created: '2026-01-12T15:46:34.521596702Z'
     dependencies:
     - name: valkey
       repository: https://valkey.io/valkey-helm/
@@ -643,7 +202,7 @@ entries:
     version: 0.1.2
   - apiVersion: v2
     appVersion: 0.3.1
-    created: "2026-01-12T14:57:30.563227924Z"
+    created: '2026-01-12T14:57:30.563227924Z'
     dependencies:
     - name: valkey
       repository: https://valkey.io/valkey-helm/
@@ -662,7 +221,7 @@ entries:
   synapse-operator:
   - apiVersion: v2
     appVersion: 0.1.11
-    created: "2026-09-10T17:10:12.520039204Z"
+    created: '2026-09-10T17:10:12.520039204Z'
     description: Helm chart for the Synapse Kubernetes operator
     digest: db492daa96151d439637f01d41758078a8a65f224ff52ee32ef5d526865c8437
     home: https://gen0sec.com
@@ -684,7 +243,7 @@ entries:
     version: 1.5.1
   - apiVersion: v2
     appVersion: 0.1.8
-    created: "2026-06-20T15:23:14.840693401Z"
+    created: '2026-06-20T15:23:14.840693401Z'
     description: Helm chart for the Synapse Kubernetes operator
     digest: 2831f66489b195227b0f81d091fc5334c1ce035cae2765103efe57a2194aca1b
     home: https://gen0sec.com
@@ -706,7 +265,7 @@ entries:
     version: 1.4.2
   - apiVersion: v2
     appVersion: 0.1.2
-    created: "2026-06-20T12:36:38.906027979Z"
+    created: '2026-06-20T12:36:38.906027979Z'
     description: Helm chart for the Synapse Kubernetes operator
     digest: 66baf9992a41b3eeafad7c6a7a4c00364e1b838919260d8d4ac2110c6f8878b0
     home: https://gen0sec.com
@@ -728,7 +287,7 @@ entries:
     version: 1.4.1
   - apiVersion: v2
     appVersion: 0.1.2
-    created: "2026-06-14T17:29:31.811922474Z"
+    created: '2026-06-14T17:29:31.811922474Z'
     description: Helm chart for the Synapse Kubernetes operator
     digest: 4944956e75d6645828a15093ef1643b0ffdbe42200a79817ff35df1f7ed4ed94
     home: https://gen0sec.com
@@ -750,7 +309,7 @@ entries:
     version: 1.4.0
   - apiVersion: v2
     appVersion: 0.1.2
-    created: "2026-06-05T12:44:46.144012197Z"
+    created: '2026-06-05T12:44:46.144012197Z'
     description: Helm chart for the Synapse Kubernetes operator
     digest: 1bd0b831169f77438c723a2acadafd981eebe8164c0e4d03a490473139d324ea
     home: https://gen0sec.com
@@ -772,7 +331,7 @@ entries:
     version: 1.0.9
   - apiVersion: v2
     appVersion: 0.1.2
-    created: "2026-06-02T15:48:20.738024273Z"
+    created: '2026-06-02T15:48:20.738024273Z'
     description: Helm chart for the Synapse Kubernetes operator
     digest: 24a9e35d54495fda4eecc7ad5c263c6ab19ff6a20a94c79a1f66a209ea832ef1
     home: https://gen0sec.com
@@ -794,7 +353,7 @@ entries:
     version: 1.0.8
   - apiVersion: v2
     appVersion: 1.0.0
-    created: "2026-01-12T14:57:30.737260154Z"
+    created: '2026-01-12T14:57:30.737260154Z'
     description: Helm chart for the Synapse Kubernetes operator
     digest: b23d0d26008d46239698e16fb4e0d728f685c1f953a7bf62b08cfea0b12be7b1
     home: https://arxignis.com
@@ -817,7 +376,7 @@ entries:
   synapse-stack:
   - apiVersion: v2
     appVersion: 0.7.0
-    created: "2026-09-10T19:58:19.317699352Z"
+    created: '2026-09-10T19:58:19.317699352Z'
     dependencies:
     - alias: proxy
       condition: proxy.enabled
@@ -854,7 +413,7 @@ entries:
     version: 0.8.0
   - apiVersion: v2
     appVersion: 0.7.0
-    created: "2026-09-10T17:10:12.744527591Z"
+    created: '2026-09-10T17:10:12.744527591Z'
     dependencies:
     - alias: proxy
       condition: proxy.enabled
@@ -891,7 +450,7 @@ entries:
     version: 0.6.1
   - apiVersion: v2
     appVersion: 0.7.0
-    created: "2026-09-10T11:46:03.415737844Z"
+    created: '2026-09-10T11:46:03.415737844Z'
     dependencies:
     - alias: proxy
       condition: proxy.enabled
@@ -928,7 +487,7 @@ entries:
     version: 0.5.3
   - apiVersion: v2
     appVersion: 0.7.0
-    created: "2026-09-06T19:07:27.394824016Z"
+    created: '2026-09-06T19:07:27.394824016Z'
     dependencies:
     - alias: proxy
       condition: proxy.enabled
@@ -965,7 +524,7 @@ entries:
     version: 0.5.2
   - apiVersion: v2
     appVersion: 0.7.0
-    created: "2026-08-28T20:55:01.404134618Z"
+    created: '2026-08-28T20:55:01.404134618Z'
     dependencies:
     - alias: proxy
       condition: proxy.enabled
@@ -1002,7 +561,7 @@ entries:
     version: 0.5.1
   - apiVersion: v2
     appVersion: 0.7.0
-    created: "2026-06-29T08:58:43.793771955Z"
+    created: '2026-06-29T08:58:43.793771955Z'
     dependencies:
     - alias: proxy
       condition: proxy.enabled
@@ -1039,7 +598,7 @@ entries:
     version: 0.5.0
   - apiVersion: v2
     appVersion: 0.7.0
-    created: "2026-06-28T16:04:21.530773439Z"
+    created: '2026-06-28T16:04:21.530773439Z'
     dependencies:
     - alias: proxy
       condition: proxy.enabled
@@ -1076,7 +635,7 @@ entries:
     version: 0.4.0
   - apiVersion: v2
     appVersion: 0.7.0
-    created: "2026-06-19T07:04:21.512058232Z"
+    created: '2026-06-19T07:04:21.512058232Z'
     dependencies:
     - alias: proxy
       condition: proxy.enabled
@@ -1113,7 +672,7 @@ entries:
     version: 0.3.0
   - apiVersion: v2
     appVersion: 0.7.0
-    created: "2026-06-14T17:29:32.043565341Z"
+    created: '2026-06-14T17:29:32.043565341Z'
     dependencies:
     - alias: proxy
       condition: proxy.enabled
@@ -1150,7 +709,7 @@ entries:
     version: 0.2.0
   - apiVersion: v2
     appVersion: 0.7.0
-    created: "2026-06-05T12:44:46.306994092Z"
+    created: '2026-06-05T12:44:46.306994092Z'
     dependencies:
     - alias: proxy
       condition: proxy.enabled
@@ -1187,7 +746,7 @@ entries:
     version: 0.1.5
   - apiVersion: v2
     appVersion: 0.7.0
-    created: "2026-06-02T15:48:20.986825867Z"
+    created: '2026-06-02T15:48:20.986825867Z'
     dependencies:
     - alias: proxy
       condition: proxy.enabled
@@ -1224,7 +783,7 @@ entries:
     version: 0.1.4
   - apiVersion: v2
     appVersion: 0.3.1
-    created: "2026-05-25T06:43:03.008889251Z"
+    created: '2026-05-25T06:43:03.008889251Z'
     dependencies:
     - alias: proxy
       condition: proxy.enabled
@@ -1261,7 +820,7 @@ entries:
     version: 0.1.3
   - apiVersion: v2
     appVersion: 0.3.1
-    created: "2026-01-12T15:46:34.832396454Z"
+    created: '2026-01-12T15:46:34.832396454Z'
     dependencies:
     - condition: synapse.enabled
       name: synapse
@@ -1292,7 +851,7 @@ entries:
     version: 0.1.2
   - apiVersion: v2
     appVersion: 0.3.1
-    created: "2026-01-12T14:57:30.933992104Z"
+    created: '2026-01-12T14:57:30.933992104Z'
     dependencies:
     - condition: synapse.enabled
       name: synapse
@@ -1321,4 +880,4 @@ entries:
     urls:
     - https://github.com/gen0sec/helm-charts/releases/download/synapse-stack-0.1.1/synapse-stack-0.1.1.tgz
     version: 0.1.1
-generated: "2026-09-10T19:58:19.317888652Z"
+generated: '2026-09-10T19:58:19.317888652Z'
