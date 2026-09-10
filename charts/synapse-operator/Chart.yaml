@@ -5,8 +5,8 @@ description: Helm chart for the Synapse Kubernetes operator
 type: application
 # Bumped: --resolve-backend-endpoints defaults ON. Requires a synapse build
 # with the atomic reload-publication fix; see values.yaml.
-version: 1.5.0
-appVersion: "0.1.8"
+version: 1.5.1
+appVersion: "0.1.11"
 home: https://gen0sec.com
 icon: https://raw.githubusercontent.com/gen0sec/helm-charts/main/images/logo.png
 sources:
