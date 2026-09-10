@@ -78,11 +78,22 @@ proxy:
         - --reload-process-name=synapse
         - --reload-debounce=500ms
       securityContext:
-        # SIGHUP requires uid parity with the target. The operator image is
-        # distroless nonroot (USER 65532) while synapse runs as root, so
-        # without this the kill fails with EPERM and reloads silently stop.
+        # SIGHUP needs TWO things, and both were observed failing live.
+        #
+        # 1. uid parity. The operator image is distroless nonroot
+        #    (USER 65532) while synapse runs as root, so kill returns EPERM.
         runAsUser: 0
         runAsNonRoot: false
+        # 2. AppArmor must permit the signal. On an AppArmor-enforcing host
+        #    (most Ubuntu/Debian installs) the sidecar runs under
+        #    containerd's default profile, which only allows signalling peers
+        #    in the SAME profile, while a privileged synapse is unconfined.
+        #    Without this the kernel denies SIGHUP regardless of uid:
+        #      apparmor="DENIED" operation="signal" signal=hup peer="unconfined"
+        #    Requires Kubernetes 1.30+; on older clusters use the annotation
+        #    container.apparmor.security.beta.kubernetes.io/config-sync: unconfined
+        appArmorProfile:
+          type: Unconfined
         allowPrivilegeEscalation: false
         readOnlyRootFilesystem: true
         capabilities:
