@@ -84,9 +84,14 @@ spec:
             - name: health
               containerPort: {{ .Values.service.healthPort }}
               protocol: TCP
-          {{- if gt (len .Values.env) 0 }}
+          {{- $env := deepCopy (.Values.env | default dict) }}
+          {{- $autoRedis := include "synapse.autoRedisUrl" . }}
+          {{- if $autoRedis }}
+          {{- $_ := set $env "REDIS_URL" $autoRedis }}
+          {{- end }}
+          {{- if gt (len $env) 0 }}
           env:
-            {{- range $key, $value := .Values.env }}
+            {{- range $key, $value := $env }}
             - name: {{ $key }}
               value: {{ $value | quote }}
             {{- end }}

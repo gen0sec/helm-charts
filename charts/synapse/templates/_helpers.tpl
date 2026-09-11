@@ -60,3 +60,44 @@ Create the name of the service account to use
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
 {{- end }}
+
+{{/*
+Address of the bundled Dragonfly, as synapse must be told to reach it.
+
+Delegates to the subchart's own `dragonfly.fullname` rather than reimplementing
+it, so a chart bump that changes the naming rule cannot drift from what we
+inject. The subchart helper only reads fullnameOverride / nameOverride /
+Chart.Name / Release.Name, so a synthetic scope is enough. Only call this when
+`.Values.dragonfly.enabled` is true - Helm prunes a disabled dependency before
+rendering, and the define goes with it.
+*/}}
+{{- define "synapse.dragonflyFullname" -}}
+{{- include "dragonfly.fullname" (dict "Values" .Values.dragonfly "Release" .Release "Chart" (dict "Name" "dragonfly")) -}}
+{{- end }}
+
+{{/*
+The Redis URL for the bundled Dragonfly, or "" when it should not be injected.
+
+Empty (i.e. no auto-wiring) when any of these hold:
+  - the dependency is off, or auto-wiring was explicitly disabled
+  - the operator already set REDIS_URL in `.Values.env`
+  - `synapse.config` carries a `proxy.redis.url` that is not the shipped
+    localhost placeholder
+
+That last case is the one that matters most: `REDIS_URL` is applied AFTER the
+config file is parsed and assigns unconditionally, so injecting it would
+silently override a URL the operator had deliberately configured.
+*/}}
+{{- define "synapse.autoRedisUrl" -}}
+{{- $df := .Values.dragonfly | default dict -}}
+{{- if and $df.enabled (dig "autoWire" true (.Values.redis | default dict)) -}}
+{{- if not (hasKey (.Values.env | default dict) "REDIS_URL") -}}
+{{- $cfg := fromYaml (.Values.synapse.config | default "") -}}
+{{- $configured := dig "proxy" "redis" "url" "" ($cfg | default dict) -}}
+{{- if or (eq $configured "") (eq $configured "redis://127.0.0.1:6379/0") -}}
+{{- $scheme := ternary "rediss" "redis" (dig "tls" "enabled" false $df) -}}
+{{- printf "%s://%s:%v/0" $scheme (include "synapse.dragonflyFullname" .) (dig "service" "port" 6379 $df) -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{- end }}

@@ -356,13 +356,24 @@ tolerations: []
 
 affinity: {}
 
-# Optional bundled Redis-compatible store (Dragonfly), for the synapse
-# features that need one. OFF by default: the shipped config points
-# `network.redis.url` at 127.0.0.1, so a bundled store is unused unless you
-# also repoint that URL. Turning it on without doing so just adds a workload.
+# Optional bundled Redis-compatible store (Dragonfly), for the synapse features
+# that need one: ACME certificate storage (`proxy.acme.storage_type: redis`),
+# the WAF captcha token store, and cross-node WAF penalty sync
+# (`proxy.penalty_sync.enabled`). OFF by default.
 #
-# When enabling, point synapse at the rendered Service, e.g.
-#   network.redis.url: "redis://<release>-dragonfly:6379/0"
+# Turning this on auto-wires the proxy at it: the chart injects
+# `REDIS_URL=redis://<dragonfly-service>:6379/0` so the store is actually used
+# rather than deployed and ignored. See `redis.autoWire` below for when that is
+# suppressed. The shipped `proxy.redis.url` placeholder points at 127.0.0.1,
+# where nothing listens, so before this the bundled store was unreachable
+# unless you also hand-edited the config.
+#
+# Install this chart TWICE (e.g. the proxy and agent aliases of synapse-stack)
+# with Dragonfly on in both and the two instances collide: `dragonfly.fullname`
+# derives from the release name, which both share, so they render the same
+# ServiceAccount/Service/Deployment. Give at least one a `fullnameOverride`.
+# The agent has no Redis-backed feature at all, so the usual answer is to leave
+# it off there.
 #
 # NOTE if you enable `storage`: Dragonfly's default `dbfilename` embeds a
 # timestamp (`dump-{timestamp}`), so every snapshot lands as a NEW file and
@@ -370,6 +381,21 @@ affinity: {}
 # via extraArgs, e.g. `--dbfilename=dump`, or the volume fills up.
 dragonfly:
   enabled: false
+  # fullnameOverride: synapse-proxy-dragonfly
+
+redis:
+  # Inject REDIS_URL pointing at the bundled Dragonfly when it is enabled.
+  #
+  # Suppressed automatically — no need to touch this — when you have already
+  # said where Redis lives, either via `env.REDIS_URL` or by setting
+  # `proxy.redis.url` in `synapse.config` to anything but the shipped
+  # localhost placeholder. That second case is why the chart looks inside the
+  # config at all: env overrides are applied after the file is parsed and
+  # assign unconditionally, so an unconditional inject would quietly replace a
+  # URL you had chosen.
+  #
+  # Set false to opt out entirely and manage the URL yourself.
+  autoWire: true
 
 # Deploy a bundled clamd for `proxy.content_scanning`. OFF by default: the
 # shipped config sets `content_scanning.enabled: false`, so a default install
