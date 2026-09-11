@@ -20,6 +20,7 @@ concurrency:
 
 jobs:
   lint-and-template:
+    timeout-minutes: 20
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -85,6 +86,7 @@ jobs:
           exit $rc
 
   version-bumped:
+    timeout-minutes: 15
     # Releases are tag-driven and chart-releaser skips versions that already
     # have a release, so an unbumped chart is published as SILENCE: the tag
     # succeeds and ships nothing. Catch it at review time instead.

@@ -24,6 +24,7 @@ concurrency:
 
 jobs:
   release:
+    timeout-minutes: 20
     permissions:
       contents: write
     runs-on: ubuntu-latest
