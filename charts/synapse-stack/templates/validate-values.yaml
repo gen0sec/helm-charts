@@ -1,0 +1,22 @@
+{{- /*
+Renders nothing; exists to turn a silent duplicate-object render into an error.
+
+`synapse` is a dependency twice over here, aliased as `proxy` and `agent`. Each
+alias gets its own values tree but they share `.Release.Name` - and the bundled
+Dragonfly derives its object names from exactly that. Enable it on both aliases
+without distinguishing them and Helm emits ServiceAccount/Service/Deployment
+`<release>-dragonfly` twice in one manifest. The apply does not fail; the second
+copy silently wins, and which one that is depends on render order. The chart's
+own defaults set a per-alias `dragonfly.fullnameOverride`, so this only fires if
+someone clears them.
+*/ -}}
+{{- $proxyOn := and (dig "enabled" false (.Values.proxy | default dict)) (dig "dragonfly" "enabled" false (.Values.proxy | default dict)) }}
+{{- $agentOn := and (dig "enabled" false (.Values.agent | default dict)) (dig "dragonfly" "enabled" false (.Values.agent | default dict)) }}
+{{- if and $proxyOn $agentOn }}
+{{- $scope := dict "Release" .Release "Chart" (dict "Name" "dragonfly") }}
+{{- $proxyName := include "dragonfly.fullname" (merge (dict "Values" .Values.proxy.dragonfly) $scope) }}
+{{- $agentName := include "dragonfly.fullname" (merge (dict "Values" .Values.agent.dragonfly) $scope) }}
+{{- if eq $proxyName $agentName }}
+{{- fail (printf "proxy and agent would both render Dragonfly as %q, overwriting each other. Give them distinct `dragonfly.fullnameOverride` values, or turn Dragonfly off for the agent - it is an XDP DaemonSet with no Redis-backed feature, so it has nothing to use one for." $proxyName) }}
+{{- end }}
+{{- end }}

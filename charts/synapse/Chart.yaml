@@ -3,10 +3,10 @@ name: synapse
 description: A Helm chart for Synapse reverse proxy with security features
 type: application
 
-# Bumped: initContainers support plus optional RBAC for the operator's
-# config-sync reload sidecar, which delivers upstreams via the Kubernetes
-# API instead of a ConfigMap mount — see templates/configsync-rbac.yaml.
-version: 0.7.0
+# Bumped: enabling the bundled Dragonfly now points synapse at it
+# (REDIS_URL is injected), and the new `redis.autoWire` key controls that.
+# Previous releases deployed a store nothing could reach.
+version: 0.8.0
 appVersion: "0.7.0"
 
 dependencies:

@@ -13,7 +13,10 @@ global:
 # shared); `fullnameOverride` forces the bare resource/pod name so pods
 # are `synapse-proxy-*` / `synapse-agent-*` (NOT `<release>-synapse-*`).
 # clamav/dragonfly are unused here (content_scanning + redis off in the
-# rendered config) and gated off so aliasing doesn't double them.
+# rendered config) and gated off so aliasing doesn't double them. Both aliases
+# also carry a distinct `dragonfly.fullnameOverride`: that name is derived from
+# the release name, which the two aliases share, so enabling Dragonfly on both
+# without it renders one ServiceAccount/Service/Deployment twice.
 proxy:
   enabled: true
   nameOverride: synapse-proxy
@@ -22,6 +25,7 @@ proxy:
     enabled: false
   dragonfly:
     enabled: false
+    fullnameOverride: synapse-proxy-dragonfly
 
 agent:
   enabled: false
@@ -39,6 +43,7 @@ agent:
     enabled: false
   dragonfly:
     enabled: false
+    fullnameOverride: synapse-agent-dragonfly
 
 operator:
   enabled: true

@@ -10,3 +10,13 @@ it into an error with the replacement spelled out.
 {{- if .Values.valkey }}
 {{- fail (printf "`valkey` is no longer a dependency of this chart - it was replaced by Dragonfly. Rename the block to `dragonfly` (and note it is now gated: set `dragonfly.enabled: true` to deploy it, which valkey never respected). Offending values: %v" (keys .Values.valkey | sortAlpha)) }}
 {{- end }}
+
+{{- /*
+Dragonfly with auth on cannot be auto-wired: the URL this chart injects carries
+no credentials, and REDIS_URL overrides whatever the config file said, so the
+result would be a proxy that authenticates to nothing and fails at connect time
+with no hint as to why. Make it a render error with the two ways out.
+*/ -}}
+{{- if and (include "synapse.autoRedisUrl" .) (dig "passwordFromSecret" "enable" false (.Values.dragonfly | default dict)) }}
+{{- fail "dragonfly.passwordFromSecret.enable is true, so the auto-wired REDIS_URL would connect without credentials. Either set `env.REDIS_URL` to a URL that carries them (redis://:<password>@host:6379/0), or set `redis.autoWire: false` and point `proxy.redis.url` in `synapse.config` at Dragonfly yourself." }}
+{{- end }}
