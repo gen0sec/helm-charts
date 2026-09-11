@@ -248,18 +248,33 @@ synapse:
         storage_path: "/var/lib/synapse/acme"
         development: false
         redis_url: null
+      # Content scanning is RULE-DRIVEN: enabling the scanner selects no
+      # traffic on its own. A request-phase WAF rule with the
+      # `content_scanning` action is the selector. That action is terminal
+      # under first-match-wins, so order content-scan rules after the block
+      # rules that should take precedence.
       content_scanning:
         enabled: false
         clamav_server: "localhost:3310"
+        # Bytes. A body over this is "unscannable" - see below.
         max_file_size: 10485760
-        scan_content_types:
-          - "text/html"
-          - "application/x-www-form-urlencoded"
-          - "multipart/form-data"
-          - "application/json"
-          - "text/plain"
-        skip_extensions: []
-        scan_expression: "http.request.method eq \"POST\" or http.request.method eq \"PUT\""
+        # What to do with a selected request whose body cannot be inspected:
+        #   block (default) - refuse it with 413
+        #   pass            - forward it unscanned, logging each time
+        unscannable: block
+        # Ceiling on body memory held across all in-flight scans (256MB).
+        # A scanned body is held until ClamAV answers, so without this
+        # max_file_size x concurrent uploads is an OOM. Requests over the
+        # ceiling are not refused - they fall back to scanning while the body
+        # streams, so a hit still blocks but the bytes reach the backend.
+        scan_memory_budget: 268435456
+        # How long a verdict is reused for an identical body, in seconds.
+        # Bounded because a "clean" verdict is only as good as the signature
+        # database behind it. Failed scans are never cached. 0 disables.
+        verdict_cache_ttl_secs: 300
+        # How many verdicts to retain. Applied when the scanner is built, so
+        # a change here takes effect on restart.
+        verdict_cache_entries: 8192
       internal_services:
         enabled: true
         port: 9180
