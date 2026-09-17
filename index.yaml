@@ -2,8 +2,23 @@ apiVersion: v1
 entries:
   synapse:
   - apiVersion: v2
+    appVersion: 0.8.3
+    created: "2026-09-17T08:24:57.557049269Z"
+    dependencies:
+    - condition: dragonfly.enabled
+      name: dragonfly
+      repository: oci://ghcr.io/dragonflydb/dragonfly/helm
+      version: v1.40.1
+    description: A Helm chart for Synapse reverse proxy with security features
+    digest: f2fc32cc3278ec14554cbd98e6359a2260ce7b86747bc96f9467be851e75b0b8
+    name: synapse
+    type: application
+    urls:
+    - https://github.com/gen0sec/helm-charts/releases/download/synapse-0.8.2/synapse-0.8.2.tgz
+    version: 0.8.2
+  - apiVersion: v2
     appVersion: 0.7.0
-    created: '2026-09-10T19:58:19.067519228Z'
+    created: "2026-09-10T19:58:19.067519228Z"
     dependencies:
     - condition: dragonfly.enabled
       name: dragonfly
@@ -18,7 +33,7 @@ entries:
     version: 0.7.0
   - apiVersion: v2
     appVersion: 0.7.0
-    created: '2026-09-10T17:10:12.329752985Z'
+    created: "2026-09-10T17:10:12.329752985Z"
     dependencies:
     - name: valkey
       repository: https://valkey.io/valkey-helm/
@@ -36,7 +51,7 @@ entries:
     version: 0.5.0
   - apiVersion: v2
     appVersion: 0.7.0
-    created: '2026-09-10T11:46:03.236842567Z'
+    created: "2026-09-10T11:46:03.236842567Z"
     dependencies:
     - name: valkey
       repository: https://valkey.io/valkey-helm/
@@ -54,7 +69,7 @@ entries:
     version: 0.4.2
   - apiVersion: v2
     appVersion: 0.7.0
-    created: '2026-09-06T19:01:19.690530394Z'
+    created: "2026-09-06T19:01:19.690530394Z"
     dependencies:
     - name: valkey
       repository: https://valkey.io/valkey-helm/
@@ -72,7 +87,7 @@ entries:
     version: 0.4.1
   - apiVersion: v2
     appVersion: 0.7.0
-    created: '2026-06-28T16:04:21.333013629Z'
+    created: "2026-06-28T16:04:21.333013629Z"
     dependencies:
     - name: valkey
       repository: https://valkey.io/valkey-helm/
@@ -90,7 +105,7 @@ entries:
     version: 0.4.0
   - apiVersion: v2
     appVersion: 0.7.0
-    created: '2026-06-19T07:04:21.321714595Z'
+    created: "2026-06-19T07:04:21.321714595Z"
     dependencies:
     - name: valkey
       repository: https://valkey.io/valkey-helm/
@@ -108,7 +123,7 @@ entries:
     version: 0.3.1
   - apiVersion: v2
     appVersion: 0.7.0
-    created: '2026-06-14T17:29:31.596104214Z'
+    created: "2026-06-14T17:29:31.596104214Z"
     dependencies:
     - name: valkey
       repository: https://valkey.io/valkey-helm/
@@ -126,7 +141,7 @@ entries:
     version: 0.3.0
   - apiVersion: v2
     appVersion: 0.7.0
-    created: '2026-06-05T12:44:45.960941171Z'
+    created: "2026-06-05T12:44:45.960941171Z"
     dependencies:
     - name: valkey
       repository: https://valkey.io/valkey-helm/
@@ -144,7 +159,7 @@ entries:
     version: 0.1.4
   - apiVersion: v2
     appVersion: 0.7.0
-    created: '2026-06-02T15:48:20.472773086Z'
+    created: "2026-06-02T15:48:20.472773086Z"
     dependencies:
     - name: valkey
       repository: https://valkey.io/valkey-helm/
@@ -162,7 +177,7 @@ entries:
     version: 0.1.3
   - apiVersion: v2
     appVersion: 0.3.1
-    created: '2026-01-12T15:46:34.521596702Z'
+    created: "2026-01-12T15:46:34.521596702Z"
     dependencies:
     - name: valkey
       repository: https://valkey.io/valkey-helm/
@@ -180,7 +195,7 @@ entries:
     version: 0.1.2
   - apiVersion: v2
     appVersion: 0.3.1
-    created: '2026-01-12T14:57:30.563227924Z'
+    created: "2026-01-12T14:57:30.563227924Z"
     dependencies:
     - name: valkey
       repository: https://valkey.io/valkey-helm/
@@ -199,7 +214,29 @@ entries:
   synapse-operator:
   - apiVersion: v2
     appVersion: 0.1.11
-    created: '2026-09-10T17:10:12.520039204Z'
+    created: "2026-09-17T08:24:57.696532302Z"
+    description: Helm chart for the Synapse Kubernetes operator
+    digest: 2dfcdbdd197217102201c3e492d12cad6b0b5f8222445bb4b2526b407731ce91
+    home: https://gen0sec.com
+    icon: https://raw.githubusercontent.com/gen0sec/helm-charts/main/images/logo.png
+    keywords:
+    - synapse
+    - operator
+    - kubernetes
+    - security
+    maintainers:
+    - email: support@gen0sec.com
+      name: Gen0Sec
+    name: synapse-operator
+    sources:
+    - https://github.com/gen0sec/synapse-operator
+    type: application
+    urls:
+    - https://github.com/gen0sec/helm-charts/releases/download/synapse-operator-1.6.0/synapse-operator-1.6.0.tgz
+    version: 1.6.0
+  - apiVersion: v2
+    appVersion: 0.1.11
+    created: "2026-09-10T17:10:12.520039204Z"
     description: Helm chart for the Synapse Kubernetes operator
     digest: db492daa96151d439637f01d41758078a8a65f224ff52ee32ef5d526865c8437
     home: https://gen0sec.com
@@ -221,7 +258,7 @@ entries:
     version: 1.5.1
   - apiVersion: v2
     appVersion: 0.1.8
-    created: '2026-06-20T15:23:14.840693401Z'
+    created: "2026-06-20T15:23:14.840693401Z"
     description: Helm chart for the Synapse Kubernetes operator
     digest: 2831f66489b195227b0f81d091fc5334c1ce035cae2765103efe57a2194aca1b
     home: https://gen0sec.com
@@ -243,7 +280,7 @@ entries:
     version: 1.4.2
   - apiVersion: v2
     appVersion: 0.1.2
-    created: '2026-06-20T12:36:38.906027979Z'
+    created: "2026-06-20T12:36:38.906027979Z"
     description: Helm chart for the Synapse Kubernetes operator
     digest: 66baf9992a41b3eeafad7c6a7a4c00364e1b838919260d8d4ac2110c6f8878b0
     home: https://gen0sec.com
@@ -265,7 +302,7 @@ entries:
     version: 1.4.1
   - apiVersion: v2
     appVersion: 0.1.2
-    created: '2026-06-14T17:29:31.811922474Z'
+    created: "2026-06-14T17:29:31.811922474Z"
     description: Helm chart for the Synapse Kubernetes operator
     digest: 4944956e75d6645828a15093ef1643b0ffdbe42200a79817ff35df1f7ed4ed94
     home: https://gen0sec.com
@@ -287,7 +324,7 @@ entries:
     version: 1.4.0
   - apiVersion: v2
     appVersion: 0.1.2
-    created: '2026-06-05T12:44:46.144012197Z'
+    created: "2026-06-05T12:44:46.144012197Z"
     description: Helm chart for the Synapse Kubernetes operator
     digest: 1bd0b831169f77438c723a2acadafd981eebe8164c0e4d03a490473139d324ea
     home: https://gen0sec.com
@@ -309,7 +346,7 @@ entries:
     version: 1.0.9
   - apiVersion: v2
     appVersion: 0.1.2
-    created: '2026-06-02T15:48:20.738024273Z'
+    created: "2026-06-02T15:48:20.738024273Z"
     description: Helm chart for the Synapse Kubernetes operator
     digest: 24a9e35d54495fda4eecc7ad5c263c6ab19ff6a20a94c79a1f66a209ea832ef1
     home: https://gen0sec.com
@@ -331,7 +368,7 @@ entries:
     version: 1.0.8
   - apiVersion: v2
     appVersion: 1.0.0
-    created: '2026-01-12T14:57:30.737260154Z'
+    created: "2026-01-12T14:57:30.737260154Z"
     description: Helm chart for the Synapse Kubernetes operator
     digest: b23d0d26008d46239698e16fb4e0d728f685c1f953a7bf62b08cfea0b12be7b1
     home: https://arxignis.com
@@ -353,8 +390,45 @@ entries:
     version: 1.0.7
   synapse-stack:
   - apiVersion: v2
+    appVersion: 0.8.3
+    created: "2026-09-17T08:24:57.823794031Z"
+    dependencies:
+    - alias: proxy
+      condition: proxy.enabled
+      name: synapse
+      repository: file://../synapse
+      version: 0.8.2
+    - alias: agent
+      condition: agent.enabled
+      name: synapse
+      repository: file://../synapse
+      version: 0.8.2
+    description: Umbrella chart that installs the Synapse dataplane together with
+      the Synapse operator
+    digest: 7f0daec9ff4ec14a7f82a3634b2b909ae6866b4661e19e5fe9b056316012f9d3
+    home: https://gen0sec.com
+    icon: https://raw.githubusercontent.com/gen0sec/helm-charts/main/images/logo.png
+    keywords:
+    - synapse
+    - operator
+    - kubernetes
+    - security
+    - proxy
+    - firewall
+    maintainers:
+    - email: support@gen0sec.com
+      name: Gen0Sec
+    name: synapse-stack
+    sources:
+    - https://github.com/gen0sec/synapse
+    - https://github.com/gen0sec/synapse-operator
+    type: application
+    urls:
+    - https://github.com/gen0sec/helm-charts/releases/download/synapse-stack-0.10.0/synapse-stack-0.10.0.tgz
+    version: 0.10.0
+  - apiVersion: v2
     appVersion: 0.7.0
-    created: '2026-09-10T19:58:19.317699352Z'
+    created: "2026-09-10T19:58:19.317699352Z"
     dependencies:
     - alias: proxy
       condition: proxy.enabled
@@ -391,7 +465,7 @@ entries:
     version: 0.8.0
   - apiVersion: v2
     appVersion: 0.7.0
-    created: '2026-09-10T17:10:12.744527591Z'
+    created: "2026-09-10T17:10:12.744527591Z"
     dependencies:
     - alias: proxy
       condition: proxy.enabled
@@ -428,7 +502,7 @@ entries:
     version: 0.6.1
   - apiVersion: v2
     appVersion: 0.7.0
-    created: '2026-09-10T11:46:03.415737844Z'
+    created: "2026-09-10T11:46:03.415737844Z"
     dependencies:
     - alias: proxy
       condition: proxy.enabled
@@ -465,7 +539,7 @@ entries:
     version: 0.5.3
   - apiVersion: v2
     appVersion: 0.7.0
-    created: '2026-09-06T19:07:27.394824016Z'
+    created: "2026-09-06T19:07:27.394824016Z"
     dependencies:
     - alias: proxy
       condition: proxy.enabled
@@ -502,7 +576,7 @@ entries:
     version: 0.5.2
   - apiVersion: v2
     appVersion: 0.7.0
-    created: '2026-08-28T20:55:01.404134618Z'
+    created: "2026-08-28T20:55:01.404134618Z"
     dependencies:
     - alias: proxy
       condition: proxy.enabled
@@ -539,7 +613,7 @@ entries:
     version: 0.5.1
   - apiVersion: v2
     appVersion: 0.7.0
-    created: '2026-06-29T08:58:43.793771955Z'
+    created: "2026-06-29T08:58:43.793771955Z"
     dependencies:
     - alias: proxy
       condition: proxy.enabled
@@ -576,7 +650,7 @@ entries:
     version: 0.5.0
   - apiVersion: v2
     appVersion: 0.7.0
-    created: '2026-06-28T16:04:21.530773439Z'
+    created: "2026-06-28T16:04:21.530773439Z"
     dependencies:
     - alias: proxy
       condition: proxy.enabled
@@ -613,7 +687,7 @@ entries:
     version: 0.4.0
   - apiVersion: v2
     appVersion: 0.7.0
-    created: '2026-06-19T07:04:21.512058232Z'
+    created: "2026-06-19T07:04:21.512058232Z"
     dependencies:
     - alias: proxy
       condition: proxy.enabled
@@ -650,7 +724,7 @@ entries:
     version: 0.3.0
   - apiVersion: v2
     appVersion: 0.7.0
-    created: '2026-06-14T17:29:32.043565341Z'
+    created: "2026-06-14T17:29:32.043565341Z"
     dependencies:
     - alias: proxy
       condition: proxy.enabled
@@ -687,7 +761,7 @@ entries:
     version: 0.2.0
   - apiVersion: v2
     appVersion: 0.7.0
-    created: '2026-06-05T12:44:46.306994092Z'
+    created: "2026-06-05T12:44:46.306994092Z"
     dependencies:
     - alias: proxy
       condition: proxy.enabled
@@ -724,7 +798,7 @@ entries:
     version: 0.1.5
   - apiVersion: v2
     appVersion: 0.7.0
-    created: '2026-06-02T15:48:20.986825867Z'
+    created: "2026-06-02T15:48:20.986825867Z"
     dependencies:
     - alias: proxy
       condition: proxy.enabled
@@ -761,7 +835,7 @@ entries:
     version: 0.1.4
   - apiVersion: v2
     appVersion: 0.3.1
-    created: '2026-05-25T06:43:03.008889251Z'
+    created: "2026-05-25T06:43:03.008889251Z"
     dependencies:
     - alias: proxy
       condition: proxy.enabled
@@ -798,7 +872,7 @@ entries:
     version: 0.1.3
   - apiVersion: v2
     appVersion: 0.3.1
-    created: '2026-01-12T15:46:34.832396454Z'
+    created: "2026-01-12T15:46:34.832396454Z"
     dependencies:
     - condition: synapse.enabled
       name: synapse
@@ -829,7 +903,7 @@ entries:
     version: 0.1.2
   - apiVersion: v2
     appVersion: 0.3.1
-    created: '2026-01-12T14:57:30.933992104Z'
+    created: "2026-01-12T14:57:30.933992104Z"
     dependencies:
     - condition: synapse.enabled
       name: synapse
@@ -858,4 +932,4 @@ entries:
     urls:
     - https://github.com/gen0sec/helm-charts/releases/download/synapse-stack-0.1.1/synapse-stack-0.1.1.tgz
     version: 0.1.1
-generated: '2026-09-10T19:58:19.317888652Z'
+generated: "2026-09-17T08:24:57.823926487Z"
