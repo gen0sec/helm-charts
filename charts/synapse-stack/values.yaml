@@ -150,6 +150,10 @@ operator:
     # Falls back to ClusterIP/FQDN when the endpoint set is missing or empty
     # (ExternalName, headless, scaled to zero), so a route is never blanked.
     resolveBackendEndpoints: true
+    # Also reconcile Gateway API (GatewayClass/Gateway/HTTPRoute) into the same
+    # upstreams render. Requires the Gateway API CRDs to be installed. Drives
+    # both the --gateway-api flag and its RBAC, so the two cannot drift.
+    gatewayAPI: false
     extraArgs: []
     resources:
       requests:

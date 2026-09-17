@@ -3,9 +3,13 @@ name: synapse-operator
 description: Helm chart for the Synapse Kubernetes operator
 # Release synapse-operator v1.0.0
 type: application
-# Bumped: --resolve-backend-endpoints defaults ON. Requires a synapse build
-# with the atomic reload-publication fix; see values.yaml.
-version: 1.5.1
+# Bumped: added the missing ingresses/status grant (--publish-status-address
+# was forbidden without it) and an opt-in operator.gatewayAPI that drives both
+# the --gateway-api flag and its RBAC.
+#
+# Still from 1.5.1: --resolve-backend-endpoints defaults ON, which requires a
+# synapse build with the atomic reload-publication fix; see values.yaml.
+version: 1.6.0
 appVersion: "0.1.11"
 home: https://gen0sec.com
 icon: https://raw.githubusercontent.com/gen0sec/helm-charts/main/images/logo.png

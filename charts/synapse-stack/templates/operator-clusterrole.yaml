@@ -55,4 +55,38 @@ rules:
   - apiGroups: [""]
     resources: ["events"]
     verbs: ["create", "patch", "update"]
+  {{- /*
+    Feature-gated rules. Each is keyed off the SAME value that turns the
+    feature on, so the permission and the flag can never drift apart: enabling
+    the feature without its RBAC is what left the east-west producers silently
+    non-functional on a default install.
+  */}}
+  {{- if and .Values.operator.ingress.enabled .Values.operator.ingress.gatewayAPI }}
+  # --gateway-api. Separate from the Ingress rules above because the CRDs are
+  # not present on every cluster; granting them unconditionally is harmless to
+  # the API server but misleading in an RBAC audit.
+  - apiGroups: ["gateway.networking.k8s.io"]
+    resources: ["gatewayclasses", "gateways", "httproutes"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["gateway.networking.k8s.io"]
+    resources: ["gatewayclasses/status", "gateways/status", "httproutes/status"]
+    verbs: ["get", "update", "patch"]
+  {{- end }}
+  {{- if or .Values.operator.identityProducer.enabled .Values.operator.edgeProducer.enabled }}
+  # IdentityProducer builds the pod-IP -> workload MMDB from Pods; EdgeProducer
+  # resolves NetworkPolicy peers back to the workloads they select.
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch"]
+  {{- end }}
+  {{- if .Values.operator.edgeProducer.enabled }}
+  # EdgeProducer compiles NetworkPolicy into the declared-edge allow-list, and
+  # reads Namespaces to resolve namespaceSelector peers.
+  - apiGroups: [""]
+    resources: ["namespaces"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["networkpolicies"]
+    verbs: ["get", "list", "watch"]
+  {{- end }}
 {{- end }}

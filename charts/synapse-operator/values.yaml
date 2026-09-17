@@ -76,6 +76,13 @@ operator:
   # "<namespace>/<name>" — must exist (or operator can create it via
   # CreateOrUpdate). Required when ingressMode is true.
   upstreamsOutConfigMap: ""
+  # Also reconcile Gateway API (GatewayClass/Gateway/HTTPRoute) into the same
+  # upstreams render. Requires the Gateway API CRDs. Drives both the
+  # --gateway-api flag and its RBAC, so the two cannot drift apart.
+  #
+  # Ingress-mode only: the operator honours this alongside --ingress-mode, so
+  # setting it without ingressMode is accepted but reconciles nothing.
+  gatewayAPI: false
   # Resolve each Ingress backend's Service ClusterIP at render time so
   # the proxy connects directly to the pod-Service IP instead of going
   # through cluster DNS on every request. Avoids per-request CoreDNS
