@@ -47,6 +47,9 @@ spec:
             {{- if .Values.operator.ingress.resolveBackendEndpoints }}
             - --resolve-backend-endpoints
             {{- end }}
+            {{- if .Values.operator.ingress.gatewayAPI }}
+            - --gateway-api
+            {{- end }}
             - --metrics-bind-address=:8080
             - --health-probe-bind-address=:8081
             {{- with .Values.operator.ingress.extraArgs }}

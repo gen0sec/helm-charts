@@ -89,6 +89,9 @@ spec:
             {{- if .Values.operator.resolveBackendEndpoints }}
             - --resolve-backend-endpoints
             {{- end }}
+            {{- if .Values.operator.gatewayAPI }}
+            - --gateway-api
+            {{- end }}
             {{- if .Values.operator.upstreamsResolver }}
             - --upstreams-resolver
             {{- end }}

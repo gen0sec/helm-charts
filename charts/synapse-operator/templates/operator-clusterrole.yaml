@@ -34,6 +34,11 @@ rules:
   - apiGroups: ["networking.k8s.io"]
     resources: ["ingressclasses"]
     verbs: ["get", "list", "watch"]
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["ingresses/status"]
+    # --publish-status-address writes .status.loadBalancer.ingress, which is
+    # what makes `kubectl get ingress` show an address.
+    verbs: ["get", "update", "patch"]
   - apiGroups: ["discovery.k8s.io"]
     resources: ["endpointslices"]
     # --resolve-backend-endpoints renders ready pod IPs as the server list,
@@ -55,4 +60,14 @@ rules:
   - apiGroups: [""]
     resources: ["events"]
     verbs: ["create", "patch", "update"]
+  {{- if .Values.operator.gatewayAPI }}
+  # --gateway-api. Kept behind the value because the CRDs are not present on
+  # every cluster, and an unconditional grant misleads an RBAC audit.
+  - apiGroups: ["gateway.networking.k8s.io"]
+    resources: ["gatewayclasses", "gateways", "httproutes"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["gateway.networking.k8s.io"]
+    resources: ["gatewayclasses/status", "gateways/status", "httproutes/status"]
+    verbs: ["get", "update", "patch"]
+  {{- end }}
 {{- end }}
