@@ -456,6 +456,44 @@ dragonfly:
   enabled: false
   # fullnameOverride: synapse-proxy-dragonfly
 
+# Bundled cert-manager, for issuing the proxy's TLS certificates with
+# Certificate/Issuer resources instead of synapse's built-in ACME client
+# (`synapse.config.proxy.acme`). Pick one: both answer the same question, and
+# running them together means two things renewing the same hostname.
+#
+# OFF by default, and it must stay off on the agent — the agent has no TLS
+# listener, and cert-manager is a CLUSTER-scoped operator. Enabling it on both
+# aliases does not fail loudly: the workloads get distinct names, then contend
+# where it is not visible. Both take the same fixed leader-election leases in
+# kube-system (so one controller sits idle), both register webhooks over the
+# cert-manager API group, and both reconcile the same cluster-wide CRDs.
+#
+# As with dragonfly, set a distinct `fullnameOverride` on whichever alias
+# enables it — the two aliases share a release name, so the default names are
+# release-derived and identical.
+#
+# CRDs ARE NOT INSTALLED HERE. `crds.enabled` stays at cert-manager's own
+# default of false, deliberately:
+#
+#   - CRD names are fixed (`certificates.cert-manager.io` and friends) and are
+#     the one part of this chart `fullnameOverride` cannot disambiguate, so a
+#     release that owns them collides with any cert-manager already running.
+#   - Helm would tie them to THIS release. Uninstalling synapse would then
+#     take the CRDs with it, and deleting a CRD deletes every Certificate in
+#     the cluster — including ones this release never issued.
+#
+# Install the CRDs out-of-band once per cluster, and keep them there:
+#   kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.21.2/cert-manager.crds.yaml
+#
+# If cert-manager is already running in the cluster, leave this off and just
+# point Issuers at it — you do not need a second controller.
+# NOTE the key is `cert-manager`, matching the dependency name in Chart.yaml.
+# Helm routes subchart values by dependency name, so a `certManager:` block
+# would gate nothing and silently drop every override inside it.
+cert-manager:
+  enabled: false
+  # fullnameOverride: synapse-proxy-cert-manager
+
 redis:
   # Inject REDIS_URL pointing at the bundled Dragonfly when it is enabled.
   #

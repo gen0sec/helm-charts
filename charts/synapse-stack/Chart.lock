@@ -1,9 +1,9 @@
 dependencies:
 - name: synapse
   repository: file://../synapse
-  version: 0.9.0
+  version: 0.10.0
 - name: synapse
   repository: file://../synapse
-  version: 0.9.0
-digest: sha256:64b7da75d47e7e44f35f41f35c275bc610c6e2b2db7388750eef6f43fee2bebc
-generated: "2026-09-18T14:22:38.718646861+02:00"
+  version: 0.10.0
+digest: sha256:e836124170931cba62e3e4b3b8ac7b4efa32c5f8d37c9cbebdb9d41441623d06
+generated: "2026-09-18T14:32:26.552387991+02:00"
