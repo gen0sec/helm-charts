@@ -26,6 +26,13 @@ proxy:
   dragonfly:
     enabled: false
     fullnameOverride: synapse-proxy-dragonfly
+  # The proxy is the only TLS terminator in the stack, so it is the only alias
+  # that may enable cert-manager. Read the `cert-manager` notes in the synapse
+  # chart's values.yaml first — in particular, the CRDs are NOT installed by
+  # this chart and must already exist in the cluster.
+  cert-manager:
+    enabled: false
+    fullnameOverride: synapse-proxy-cert-manager
 
 agent:
   enabled: false
@@ -44,6 +51,12 @@ agent:
   dragonfly:
     enabled: false
     fullnameOverride: synapse-agent-dragonfly
+  # Never enable this on the agent: it is an XDP DaemonSet with no TLS
+  # listener. A second cert-manager does not collide on names, it contends
+  # silently — same leader-election leases in kube-system, duplicate webhooks,
+  # same cluster-wide CRDs. Kept explicit so aliasing cannot turn it on.
+  cert-manager:
+    enabled: false
 
 operator:
   enabled: true
