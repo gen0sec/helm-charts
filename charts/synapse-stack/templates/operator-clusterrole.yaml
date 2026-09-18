@@ -11,7 +11,13 @@ rules:
     verbs: ["get", "list", "watch", "create", "update", "patch"]
   - apiGroups: [""]
     resources: ["secrets"]
-    verbs: ["get", "list", "watch"]
+    # Read TLS Secrets to project Ingress certs; write the operator-owned
+    # cert output Secret when --certs-out-secret is set (central mode).
+    # Without the write verbs projectCertsToSecret's CreateOrUpdate is
+    # rejected and every Ingress TLS cert silently fails to reach the
+    # proxy, which then serves its self-signed default. Matches the
+    # standalone synapse-operator chart, which already grants these.
+    verbs: ["get", "list", "watch", "create", "update", "patch"]
   - apiGroups: [""]
     resources: ["nodes"]
     # NetVarsResolver (--netvars-resolver) reads Node IPs + PodCIDRs to
