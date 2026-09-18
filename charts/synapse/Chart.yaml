@@ -3,14 +3,13 @@ name: synapse
 description: A Helm chart for Synapse reverse proxy with security features
 type: application
 
-# Bumped: credentials move out of the config.yaml ConfigMap and into a
-# Secret injected as env vars - see the `secrets` values.
-version: 0.8.2
+# Bumped: the bundled Dragonfly moves to the v2.0.0 server line.
+version: 0.9.0
 appVersion: "0.8.3"
 
 dependencies:
   - name: dragonfly
-    version: v1.40.1
+    version: v2.0.0
     repository: oci://ghcr.io/dragonflydb/dragonfly/helm
     # Gated, unlike the valkey dependency it replaces. Without a condition a
     # dependency deploys unconditionally, so `valkey.enabled: false` was
