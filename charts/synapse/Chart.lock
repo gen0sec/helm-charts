@@ -2,5 +2,8 @@ dependencies:
 - name: dragonfly
   repository: oci://ghcr.io/dragonflydb/dragonfly/helm
   version: v2.0.0
-digest: sha256:ddc53608c59c1fe0a743003a7d69117010e8cf983a8dc75516207705a0055975
-generated: "2026-09-18T14:22:32.983532804+02:00"
+- name: cert-manager
+  repository: https://charts.jetstack.io
+  version: v1.21.2
+digest: sha256:c69675ad6ece0f9f158e06dfb961dddbd9978d53fdecbea3707cd9826b9a7d67
+generated: "2026-09-18T14:32:21.205837929+02:00"
