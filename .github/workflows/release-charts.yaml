@@ -53,13 +53,23 @@ jobs:
 
       - name: Add repositories for dependencies
         run: |
-          helm repo add valkey https://valkey.io/valkey-helm/
+          # Every non-OCI dependency repository must be here. dragonfly is OCI
+          # and needs no `repo add`; cert-manager is not, and without jetstack
+          # `helm dependency build` cannot resolve it at all.
+          helm repo add jetstack https://charts.jetstack.io
           helm repo update
 
       - name: Build chart dependencies
         run: |
-          for chart in charts/*; do
-            [ -f "$chart/Chart.yaml" ] && helm dependency build "$chart" || true
+          # No `|| true`. Swallowing this is how a release ships a chart with
+          # an EMPTY charts/ directory: dependency build fails, chart-releaser
+          # packages whatever is on disk, and the published chart renders none
+          # of its subcharts - silently, because a gated subchart that is
+          # simply absent looks exactly like one that is turned off.
+          set -euo pipefail
+          for chart in charts/*/; do
+            [ -f "$chart/Chart.yaml" ] || continue
+            helm dependency build "$chart"
           done
 
       - name: Run chart-releaser

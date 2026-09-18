@@ -30,17 +30,21 @@ jobs:
 
       - name: Add repositories for dependencies
         run: |
-          helm repo add valkey https://valkey.io/valkey-helm/
+          # Keep in step with release-charts.yaml. dragonfly is OCI and needs
+          # no `repo add`; cert-manager needs jetstack.
+          helm repo add jetstack https://charts.jetstack.io
           helm repo update
 
-      # Only synapse-stack has a tracked Chart.lock. `build` happens to fall
-      # back to resolving when the lock is absent, but that is version-
-      # dependent behaviour, so fall back explicitly rather than rely on it.
+      # Strictly `build`, with no `update` fallback. The fallback used to
+      # regenerate a stale Chart.lock in place, so CI passed on a lock that a
+      # clean checkout - and the release job - could not build from. Reviewing
+      # a repaired tree tells you nothing about the tree you are shipping.
       - name: Build chart dependencies
         run: |
+          set -euo pipefail
           for chart in charts/*/; do
             [ -f "$chart/Chart.yaml" ] || continue
-            helm dependency build "$chart" || helm dependency update "$chart"
+            helm dependency build "$chart"
           done
 
       - name: helm lint
