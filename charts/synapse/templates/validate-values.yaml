@@ -46,6 +46,34 @@ exposure a recorded decision rather than an accident.
 {{- end }}
 
 {{- /*
+synapse's built-in ACME client and the bundled cert-manager answer the same
+question, and nothing stops both from answering it at once. Neither errors:
+both watch the same hostname, both order from the same CA, and each renews on
+its own schedule into a different place - synapse into `acme.storage_path` (or
+Redis), cert-manager into a Secret. The proxy serves whichever one wrote the
+file it reads, so the effective certificate depends on renewal timing, and
+hitting the CA's rate limit for the hostname is a matter of when rather than
+whether.
+
+`fromYaml` on a malformed config returns a dict carrying an `Error` key rather
+than failing, and every lookup into it then reads as false. Skip explicitly in
+that case: a config we cannot parse tells us nothing about whether ACME is on,
+and failing here would blame cert-manager for what is a typo in synapse.config.
+Note this chart does not otherwise validate that string - it is rendered into
+the ConfigMap as-is - so the malformed config surfaces at runtime, not render
+time. That is pre-existing behaviour, not something this guard changes.
+*/ -}}
+{{- $cmOn := dig "enabled" false ((index .Values "cert-manager") | default dict) }}
+{{- if $cmOn }}
+  {{- $parsed := fromYaml (.Values.synapse.config | default "") }}
+  {{- if not (index $parsed "Error") }}
+    {{- if dig "proxy" "acme" "enabled" false $parsed }}
+      {{- fail "`cert-manager.enabled` and synapse's built-in ACME (`proxy.acme.enabled` in synapse.config) are both on. They are alternatives, not layers: both would renew the same hostname on separate schedules into separate stores, so which certificate the proxy serves depends on renewal timing, and the CA's rate limit for that hostname is reached sooner or later. Pick one - set `cert-manager.enabled: false` to keep the built-in client, or set `proxy.acme.enabled: false` in synapse.config and issue via a Certificate resource." }}
+    {{- end }}
+  {{- end }}
+{{- end }}
+
+{{- /*
 NetVarsResolver reads and rewrites config.yaml in a ConfigMap only
 (netvars_resolver.go: `var cm corev1.ConfigMap` ... `r.Update(ctx, &cm)`).
 With config.yaml in a Secret it finds nothing to rewrite and silently stops

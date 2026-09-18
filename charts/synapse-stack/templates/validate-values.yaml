@@ -20,3 +20,19 @@ someone clears them.
 {{- fail (printf "proxy and agent would both render Dragonfly as %q, overwriting each other. Give them distinct `dragonfly.fullnameOverride` values, or turn Dragonfly off for the agent - it is an XDP DaemonSet with no Redis-backed feature, so it has nothing to use one for." $proxyName) }}
 {{- end }}
 {{- end }}
+
+{{- /*
+cert-manager on both aliases. Unlike Dragonfly above, this needs no name
+comparison: distinct names are not the fix here, they are what hides the
+problem. cert-manager is cluster-scoped, so two copies install cleanly and then
+contend out of sight - the same fixed leader-election leases in kube-system
+(one controller just stops doing anything), two webhook configurations over the
+cert-manager API group, and one set of cluster-wide CRDs driven by both.
+
+Only the proxy terminates TLS, so a second copy has nothing to issue for.
+*/ -}}
+{{- $proxyCM := and (dig "enabled" false (.Values.proxy | default dict)) (dig "cert-manager" "enabled" false (.Values.proxy | default dict)) }}
+{{- $agentCM := and (dig "enabled" false (.Values.agent | default dict)) (dig "cert-manager" "enabled" false (.Values.agent | default dict)) }}
+{{- if and $proxyCM $agentCM }}
+{{- fail "cert-manager is enabled on both the proxy and the agent. It is a cluster-scoped operator, so the second copy does not fail - it installs and then contends invisibly: both take the same leader-election leases in kube-system (one controller silently idles), both register webhooks over the cert-manager API group, and both reconcile the same cluster-wide CRDs. Set `agent.cert-manager.enabled: false` - the agent is an XDP DaemonSet with no TLS listener, so it has nothing to issue certificates for." }}
+{{- end }}

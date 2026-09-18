@@ -3,8 +3,8 @@ name: synapse
 description: A Helm chart for Synapse reverse proxy with security features
 type: application
 
-# Bumped: optional bundled cert-manager for the proxy (off by default).
-version: 0.10.0
+# Bumped: refuse cert-manager and synapse's built-in ACME at the same time.
+version: 0.10.1
 appVersion: "0.8.3"
 
 dependencies:
