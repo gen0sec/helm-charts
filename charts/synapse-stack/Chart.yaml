@@ -4,7 +4,7 @@ description: Umbrella chart that installs the Synapse dataplane together with th
 # Release synapse-stack v0.1.5
 type: application
 # Bumped: refuse cert-manager on both aliases, and follow synapse to 0.10.1.
-version: 0.12.1
+version: 0.12.2
 appVersion: "0.8.3"
 home: https://gen0sec.com
 icon: https://raw.githubusercontent.com/gen0sec/helm-charts/main/images/logo.png
