@@ -3,11 +3,9 @@ name: synapse-stack
 description: Umbrella chart that installs the Synapse dataplane together with the Synapse operator
 # Release synapse-stack v0.1.5
 type: application
-# Bumped: the ClusterRole now grants what the chart's own feature flags need
-# — Ingress/Gateway API for operator.ingress, Pods/Namespaces/NetworkPolicies
-# for the east-west producers. Each rule is gated on the value that enables
-# the feature, so permission and flag cannot drift.
-version: 0.10.0
+# Bumped: follows the synapse subchart to 0.9.0, which moves the bundled
+# Dragonfly to the v2.0.0 server line.
+version: 0.11.0
 appVersion: "0.8.3"
 home: https://gen0sec.com
 icon: https://raw.githubusercontent.com/gen0sec/helm-charts/main/images/logo.png
@@ -27,12 +25,12 @@ dependencies:
   #   proxy  → synapse-proxy (TLS passthrough / L7 / Tier-2 terminate)
   #   agent  → synapse-agent (XDP transparent observe; edge only)
   - name: synapse
-    version: 0.8.2
+    version: 0.9.0
     repository: "file://../synapse"
     alias: proxy
     condition: proxy.enabled
   - name: synapse
-    version: 0.8.2
+    version: 0.9.0
     repository: "file://../synapse"
     alias: agent
     condition: agent.enabled
