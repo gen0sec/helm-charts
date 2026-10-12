@@ -1,0 +1,166 @@
+{{- if and .Values.operator.enabled .Values.operator.rbac.create .Values.operator.proxyController.enabled }}
+# Copied from config/proxy-controller/rbac.yaml in gen0sec/synapse-operator
+# (release/v0.2.0): the rules are the operator's own, not ours, and
+# hack/check-operator-chart.sh fails if they drift. A role of its own, as the
+# operator ships it, so that an operator run without --proxy-controller is
+# not handed it.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "synapse-operator.fullname" . }}-proxy-controller
+  labels:
+    {{- include "synapse-operator.labels" . | nindent 4 }}
+rules:
+  - apiGroups:
+      - synapse.gen0sec.com
+    resources:
+      - synapseproxies
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - synapse.gen0sec.com
+    resources:
+      - synapseproxies/status
+    verbs:
+      - patch
+  # Everything written for a proxy is owned by it. A cluster that enforces
+  # owner-reference permissions, as OpenShift does, asks for this before it
+  # lets an object depend on its owner.
+  - apiGroups:
+      - synapse.gen0sec.com
+    resources:
+      - synapseproxies/finalizers
+    verbs:
+      - update
+  # The proxy itself. Applied server-side, which is a patch, and a create as
+  # well the first time.
+  - apiGroups:
+      - apps
+    resources:
+      - deployments
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - patch
+  - apiGroups:
+      - ""
+    resources:
+      - services
+      - serviceaccounts
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - patch
+  # Which configuration Secrets are still mounted by pods of an earlier
+  # rollout, and so must be kept.
+  - apiGroups:
+      - apps
+    resources:
+      - replicasets
+    verbs:
+      - get
+      - list
+      - watch
+  # Read: the Secret an API key is in, and the TLS Secrets of the Ingresses.
+  # Written: each proxy's configuration (created and patched, then deleted
+  # once no pod mounts it) and its certificates (created and updated).
+  - apiGroups:
+      - ""
+    resources:
+      - secrets
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+  # Each proxy's routes.
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+  # Where the routes come from, and which proxy serves which class.
+  - apiGroups:
+      - networking.k8s.io
+    resources:
+      - ingresses
+      - ingressclasses
+    verbs:
+      - get
+      - list
+      - watch
+  # The proxy's address, published on the Ingresses it serves.
+  - apiGroups:
+      - networking.k8s.io
+    resources:
+      - ingresses/status
+    verbs:
+      - update
+  # The Gateway API, where it is installed: the Gateways of a class that
+  # names a proxy, the routes attached to them, and what lets them refer
+  # across namespaces. Each is told in its status what became of it.
+  - apiGroups:
+      - gateway.networking.k8s.io
+    resources:
+      - gatewayclasses
+      - gateways
+      - httproutes
+      - referencegrants
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - gateway.networking.k8s.io
+    resources:
+      - gatewayclasses/status
+      - gateways/status
+      - httproutes/status
+    verbs:
+      - update
+  # A Gateway's listener may choose by label which namespaces attach routes.
+  - apiGroups:
+      - ""
+    resources:
+      - namespaces
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - ""
+    resources:
+      - events
+    verbs:
+      - create
+      - patch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "synapse-operator.fullname" . }}-proxy-controller
+  labels:
+    {{- include "synapse-operator.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ include "synapse-operator.fullname" . }}-proxy-controller
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "synapse-operator.serviceAccountName" . }}
+    namespace: {{ .Values.global.namespaces.operator }}
+{{- end }}

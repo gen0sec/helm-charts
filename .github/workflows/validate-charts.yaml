@@ -7,11 +7,13 @@ on:
   pull_request:
     paths:
       - 'charts/**'
+      - 'hack/**'
       - '.github/workflows/validate-charts.yaml'
   push:
     branches: [ main ]
     paths:
       - 'charts/**'
+      - 'hack/**'
   workflow_dispatch:
 
 concurrency:
@@ -84,6 +86,22 @@ jobs:
           done
           [ "$found" = 1 ] || echo "no example overlays found"
           exit $rc
+
+  # The repo has no unit-test harness; this renders synapse-operator and
+  # asserts on the output (see the script's header). Needs the history: the
+  # disabled-by-default check renders the base commit's chart.
+  operator-chart:
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+
+      - name: Check the synapse-operator chart
+        run: hack/check-operator-chart.sh
 
   version-bumped:
     timeout-minutes: 15
