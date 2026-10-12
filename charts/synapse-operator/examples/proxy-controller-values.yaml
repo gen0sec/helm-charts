@@ -1,0 +1,10 @@
+# Run SynapseProxy resources (operator v0.2.0+). Installs the SynapseProxy CRD
+# and grants the operator its proxy-controller role. Not combinable with
+# ingressMode: the operator refuses that pair.
+#
+#   helm install synapse-operator gen0sec/synapse-operator \
+#     -n synapse-os --create-namespace \
+#     -f examples/proxy-controller-values.yaml
+operator:
+  proxyController:
+    enabled: true

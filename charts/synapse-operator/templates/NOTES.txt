@@ -14,6 +14,11 @@ Ingress mode: ON
   upstreamsResolver:       {{ .Values.operator.upstreamsResolver }}
 {{- end }}
 
+{{- if .Values.operator.proxyController.enabled }}
+
+Proxy controller: ON — SynapseProxy resources (synapse.gen0sec.com/v1alpha1) are reconciled.
+{{- end }}
+
 Watch the operator:
   kubectl -n {{ .Values.global.namespaces.operator }} logs -f deploy/{{ include "synapse-operator.fullname" . }}
   kubectl -n {{ .Values.global.namespaces.operator }} rollout status deploy/{{ include "synapse-operator.fullname" . }}

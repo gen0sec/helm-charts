@@ -3,14 +3,19 @@ name: synapse-operator
 description: Helm chart for the Synapse Kubernetes operator
 # Release synapse-operator v1.0.0
 type: application
-# Bumped: added the missing ingresses/status grant (--publish-status-address
+# Bumped for operator v0.2.0: opt-in operator.proxyController runs SynapseProxy
+# resources (--proxy-controller, its ClusterRole, and the CRD). Off by default;
+# with it off the rendered output is unchanged apart from the version labels.
+# Do not release before the v0.2.0 operator image is published.
+#
+# Previously: added the missing ingresses/status grant (--publish-status-address
 # was forbidden without it) and an opt-in operator.gatewayAPI that drives both
 # the --gateway-api flag and its RBAC.
 #
 # Still from 1.5.1: --resolve-backend-endpoints defaults ON, which requires a
 # synapse build with the atomic reload-publication fix; see values.yaml.
-version: 1.6.0
-appVersion: "0.1.11"
+version: 1.7.0
+appVersion: "0.2.0"
 home: https://gen0sec.com
 icon: https://raw.githubusercontent.com/gen0sec/helm-charts/main/images/logo.png
 sources:
