@@ -3,7 +3,9 @@
 # unit-test harness (CI runs helm lint and helm template), so this renders the
 # chart and asserts on the output with yq.
 #
-#   1. disabled (the default): renders what the base chart rendered
+#   1. disabled (the default): renders what the chart at BASE rendered; runs
+#      only when BASE is set, as a one-off proof for a change meant to leave
+#      the defaults alone (CI does not set it, so default changes stay free)
 #   2. enabled: the flag, the CRD (kept on uninstall) and a ClusterRole whose
 #      rules are exactly the operator's own
 #   3. crds.install=false: no CRD, the role is still rendered
@@ -11,11 +13,11 @@
 #
 # Needs helm, yq (mikefarah, v4) and git. Run from anywhere.
 #
-#   BASE   commit whose chart is the reference for check 1. Needs the history
-#          (fetch-depth: 0 in CI).
+#   BASE   commit whose chart is the reference for check 1, e.g.
+#          BASE=origin/main. Unset, check 1 is skipped.
 set -euo pipefail
 
-BASE="${BASE:-0243668}"
+BASE="${BASE:-}"
 root="$(cd "$(dirname "$0")/.." && pwd)"
 chart="$root/charts/synapse-operator"
 vendored="$root/hack/operator-proxy-controller-rbac.yaml"
@@ -49,18 +51,42 @@ normalise() {
     -e 's#^( *app\.kubernetes\.io/version: ).*#\1VERSION#' "$1"
 }
 
+# check_binding FILE FULLNAME SA@NAMESPACE asserts the proxy-controller binding
+# ties FULLNAME-proxy-controller to that ServiceAccount, and that the
+# Deployment runs as it.
+check_binding() {
+  local got sa
+  got="$(doc "$1" ClusterRoleBinding "$2-proxy-controller" |
+    yq '.roleRef.kind + "/" + .roleRef.name + " -> " + .subjects[0].kind + "/" + .subjects[0].name + "@" + .subjects[0].namespace')"
+  if [ "$got" = "ClusterRole/$2-proxy-controller -> ServiceAccount/$3" ]; then
+    pass "the binding ties the role to ServiceAccount $3"
+  else
+    fail "ClusterRoleBinding is '$got', want ServiceAccount/$3"
+  fi
+  sa="$(yq 'select(.kind == "Deployment") | .spec.template.spec.serviceAccountName + "@" + .metadata.namespace' "$1")"
+  if [ "$sa" != "$3" ]; then
+    fail "the Deployment runs as '$sa', not $3"
+  fi
+}
+
 # --- 1. disabled renders what the base rendered ------------------------------
 echo "==> disabled"
-mkdir -p "$work/base"
-git -C "$root" archive "$BASE" charts/synapse-operator | tar -x -C "$work/base"
-base_tag="$(yq '.appVersion' "$work/base/charts/synapse-operator/Chart.yaml")"
-helm template "$release" "$work/base/charts/synapse-operator" >"$work/base.yaml"
-render --set "operator.image.tag=$base_tag" >"$work/disabled.yaml"
-if diff -u <(normalise "$work/base.yaml") <(normalise "$work/disabled.yaml") >"$work/disabled.diff"; then
-  pass "defaults render what $BASE rendered"
+if [ -z "$BASE" ]; then
+  echo "skip: BASE is not set"
 else
-  fail "defaults differ from $BASE:"
-  head -n 40 "$work/disabled.diff" >&2
+  mkdir -p "$work/base"
+  git -C "$root" archive "$BASE" charts/synapse-operator | tar -x -C "$work/base"
+  base_tag="$(yq '.appVersion' "$work/base/charts/synapse-operator/Chart.yaml")"
+  helm template "$release" "$work/base/charts/synapse-operator" >"$work/base.yaml"
+  # The image tag is pinned to the base's, so this does not show that the
+  # default image follows appVersion.
+  render --set "operator.image.tag=$base_tag" >"$work/disabled.yaml"
+  if diff -u <(normalise "$work/base.yaml") <(normalise "$work/disabled.yaml") >"$work/disabled.diff"; then
+    pass "defaults render what $BASE rendered"
+  else
+    fail "defaults differ from $BASE:"
+    head -n 40 "$work/disabled.diff" >&2
+  fi
 fi
 
 # --- 2. enabled --------------------------------------------------------------
@@ -94,18 +120,23 @@ if render --set operator.proxyController.enabled=true >"$work/enabled.yaml" 2>"$
       fail "ClusterRole rules differ from $vendored:"
       head -n 40 "$work/rules.diff" >&2
     fi
-    subject="$(doc "$work/enabled.yaml" ClusterRoleBinding "$fullname-proxy-controller" |
-      yq '.roleRef.name + " " + .subjects[0].name')"
-    if [ "$subject" = "$fullname-proxy-controller $fullname" ]; then
-      pass "the binding ties the role to the chart's ServiceAccount"
-    else
-      fail "ClusterRoleBinding is '$subject'"
-    fi
+    check_binding "$work/enabled.yaml" "$fullname" "$fullname@synapse-os"
   else
     fail "ClusterRole $fullname-proxy-controller is not rendered"
   fi
 else
   fail "enabled render failed: $(cat "$work/enabled.err")"
+fi
+
+# The binding must name the ServiceAccount the Deployment runs as, in the
+# operator's namespace, however the names are overridden.
+echo "==> binding under overridden names"
+if render --set operator.proxyController.enabled=true --set operator.fullnameOverride=foo \
+  --set operator.serviceAccount.name=bar --set global.namespaces.operator=ns1 \
+  >"$work/names.yaml" 2>"$work/names.err"; then
+  check_binding "$work/names.yaml" foo "bar@ns1"
+else
+  fail "render failed: $(cat "$work/names.err")"
 fi
 
 # --- 3. crds.install=false ---------------------------------------------------

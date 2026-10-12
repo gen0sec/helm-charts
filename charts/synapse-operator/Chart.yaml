@@ -5,7 +5,8 @@ description: Helm chart for the Synapse Kubernetes operator
 type: application
 # Bumped for operator v0.2.0: opt-in operator.proxyController runs SynapseProxy
 # resources (--proxy-controller, its ClusterRole, and the CRD). Off by default;
-# with it off the rendered output is unchanged apart from the version labels.
+# with it off the rendered output is unchanged apart from the version labels
+# and the default operator image, which follows appVersion (0.1.11 -> 0.2.0).
 # Do not release before the v0.2.0 operator image is published.
 #
 # Previously: added the missing ingresses/status grant (--publish-status-address
