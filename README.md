@@ -95,6 +95,11 @@ The chart wires these operator flags from `values.yaml`:
 | `operator.configHashAnnotation` | `--config-hash-annotation` | `synapse.gen0sec.com/config-hash` |
 | `operator.ignoreConfigMapKeys` | `--ignore-configmap-keys` | `upstreams.yaml` |
 | `operator.ignoreSecretKeys` | `--ignore-secret-keys` | _(empty)_ |
+| `operator.proxyController.enabled` | `--proxy-controller` (and its ClusterRole, and the CRD) | `false` |
+| `operator.proxyController.crds.install` | renders the `SynapseProxy` CRD | `true` |
+| `operator.proxyController.crds.keep` | `helm.sh/resource-policy: keep` on the CRD, so uninstall leaves SynapseProxies alone | `true` |
+
+`operator.proxyController.enabled` runs `SynapseProxy` resources (operator v0.2.0+). It cannot be combined with `operator.ingressMode`; the chart refuses to render the pair. See [`examples/proxy-controller-values.yaml`](charts/synapse-operator/examples/proxy-controller-values.yaml).
 
 > The operator binary also supports an Ingress + Gateway API mode (`--ingress-mode`); this chart does **not** enable it (config-sync mode only).
 
