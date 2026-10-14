@@ -16,13 +16,14 @@
 # base chart's appVersion (image.tag), so the image is NOT compared by the
 # defaults and overlay-name cases; an appVersion bump is not a default change.
 #
-# An INTENDED change of the default render is declared, not waived: commit
-# hack/operator-chart-defaults.diff holding the exact `diff -u --label base
-# --label head` of the normalised base and head default renders. The file is
-# honoured only when it differs between BASE and HEAD, so the PR that changes
-# the defaults carries (and reviewers see) the diff, and the next PR is held to
-# "no change" again without touching it. Otherwise the expected diff is empty.
-# Regenerate it by running the script and copying the printed diff.
+# An INTENDED change of the render is declared, not waived: commit
+# hack/operator-chart-expected/<case>.diff (defaults, overlay, overlay-name)
+# holding the exact `diff -u --label base --label head` of that case's
+# normalised base and head renders. Each file is honoured only when it differs
+# between BASE and HEAD, so the PR that changes the render carries (and
+# reviewers see) the diffs, and the next PR is held to "no change" again
+# without touching them. Otherwise the expected diff of a case is empty.
+# Regenerate one by running the script and copying the printed diff.
 #
 # Needs helm, yq (mikefarah, v4) and git. Run from anywhere.
 #
@@ -171,15 +172,6 @@ else
   base_legacy=0
   [ "$(yq '.operator | tag' "$base_chart/values.yaml")" = '!!map' ] && base_legacy=1
 
-  # The expected default-render diff: see the header. Empty unless this file
-  # changed between BASE and HEAD.
-  expected="$root/hack/operator-chart-defaults.diff"
-  : >"$work/expected.diff"
-  if ! git -C "$root" diff --quiet "$BASE" HEAD -- hack/operator-chart-defaults.diff &&
-    [ -f "$expected" ]; then
-    cp "$expected" "$work/expected.diff"
-  fi
-
   # compare NAME FLAT_VALUES_FILE|- [HEAD_ARGS...]; the head render is pinned
   # to the base's appVersion by the caller where the fixture sets no image.tag.
   compare() {
@@ -197,9 +189,13 @@ else
       return
     fi
     diff -u --label base --label head <(normalise "$work/$name.base.yaml") <(normalise "$work/$name.head.yaml") >"$work/$name.diff" || true
-    local want="$work/none.diff"
+    # The case's declared diff: empty unless its file changed between BASE and
+    # HEAD.
+    local want="$work/$name.expected.diff" file="hack/operator-chart-expected/$name.diff"
     : >"$want"
-    [ "$name" = defaults ] && want="$work/expected.diff"
+    if ! git -C "$root" diff --quiet "$BASE" HEAD -- "$file" && [ -f "$root/$file" ]; then
+      cp "$root/$file" "$want"
+    fi
     if cmp -s "$work/$name.diff" "$want"; then
       pass "$name renders what $BASE rendered"
     else
