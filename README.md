@@ -86,15 +86,15 @@ The `synapse-operator` chart deploys the operator as a config-sync controller (i
 - Hashes their combined data and stamps the hash onto the Synapse workload under the `synapse.gen0sec.com/config-hash` annotation.
 - A changed hash bumps the pod template, so Kubernetes **rolls the pods to pick up new config** — no manual restarts.
 
-The chart wires these operator flags from `values.yaml`:
+The chart wires these operator flags from `values.yaml` (top-level keys since 2.0.0; before that they sat under `operator:`):
 
 | Value | Operator flag | Default |
 |---|---|---|
-| `operator.leaderElect` | `--leader-elect` | `true` |
-| `operator.labelSelector` | `--label-selector` | `app.kubernetes.io/name in (synapse,synapse-proxy,synapse-agent)` |
-| `operator.configHashAnnotation` | `--config-hash-annotation` | `synapse.gen0sec.com/config-hash` |
-| `operator.ignoreConfigMapKeys` | `--ignore-configmap-keys` | `upstreams.yaml` |
-| `operator.ignoreSecretKeys` | `--ignore-secret-keys` | _(empty)_ |
+| `leaderElect` | `--leader-elect` | `true` |
+| `labelSelector` | `--label-selector` | `app.kubernetes.io/name in (synapse,synapse-proxy,synapse-agent)` |
+| `configHashAnnotation` | `--config-hash-annotation` | `synapse.gen0sec.com/config-hash` |
+| `ignoreConfigMapKeys` | `--ignore-configmap-keys` | `upstreams.yaml` |
+| `ignoreSecretKeys` | `--ignore-secret-keys` | _(empty)_ |
 
 > The operator binary also supports an Ingress + Gateway API mode (`--ingress-mode`); this chart does **not** enable it (config-sync mode only).
 
