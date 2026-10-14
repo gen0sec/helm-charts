@@ -19,6 +19,12 @@
 #      when true or when left unset (the default). Pod and Deployment labels
 #      keep instance in every mode, and each selector is a subset of the pod
 #      labels
+#   7. ingress.*: the ingress-mode companion Deployment (<fullname>-ingress).
+#      Off by default; name, selectors (both modes), args, ServiceAccount, image
+#      fallback, security context and /tmp mount, enabled=false, Gateway RBAC
+#      gating, the two refusals, and a comparison with the synapse-stack's
+#      operator.ingress (needs `helm dependency build charts/synapse-stack`;
+#      skipped only when that is missing and CI is unset)
 #
 # Only chart/version labels are normalised. The head render is pinned to the
 # base chart's appVersion (image.tag), so the image is NOT compared by the
@@ -322,6 +328,250 @@ for mode in true false default; do
 done
 if [ "$failed" = 0 ]; then
   pass "instanceLabelInSelector: selectors are {name, component} when false and add instance when true or unset"
+fi
+
+# --- 7. the ingress-mode Deployment ---------------------------------------------
+# The synapse-stack's operator.ingress.* as flat ingress.*: a second Deployment
+# running --ingress-mode next to the config-hash operator, on the same
+# ServiceAccount. Off by default.
+echo "==> ingress-mode Deployment"
+ing_dep='select(.kind == "Deployment" and .metadata.name == "synapse-operator-ingress")'
+ing_set=(--set fullnameOverride=synapse-operator --set image.tag=0.1.11
+  --set ingress.enabled=true --set ingress.upstreamsOutConfigMap=ns/up)
+
+# 7a. off by default: one Deployment and nothing of the ingress-mode companion
+if render >"$work/ing-off.yaml" 2>"$work/ing-off.err"; then
+  if [ "$(yq 'select(.kind == "Deployment") | .metadata.name' "$work/ing-off.yaml" | wc -l)" = 1 ] &&
+    ! grep -q 'ingress-controller' "$work/ing-off.yaml"; then
+    pass "ingress.enabled is off by default and renders no second Deployment"
+  else
+    fail "ingress-mode objects are rendered by default"
+  fi
+else
+  fail "default render failed: $(cat "$work/ing-off.err")"
+fi
+
+# 7b. on: name, selector, labels, SA, args
+for mode in true false; do
+  if ! render "${ing_set[@]}" --set "instanceLabelInSelector=$mode" >"$work/ing-$mode.yaml" 2>"$work/ing-$mode.err"; then
+    fail "ingress on, instanceLabelInSelector=$mode: render failed: $(cat "$work/ing-$mode.err")"
+    continue
+  fi
+  f="$work/ing-$mode.yaml"
+  if [ "$(yq "$ing_dep | .metadata.name" "$f")" != synapse-operator-ingress ]; then
+    fail "ingress on: no Deployment named synapse-operator-ingress"
+    continue
+  fi
+  want='{"app.kubernetes.io/component":"ingress-controller","app.kubernetes.io/name":"synapse-operator-ingress"}'
+  [ "$mode" = true ] && want="{\"app.kubernetes.io/component\":\"ingress-controller\",\"$inst\":\"$release\",\"app.kubernetes.io/name\":\"synapse-operator-ingress\"}"
+  got="$(yq -o=json -I=0 "$ing_dep | .spec.selector.matchLabels | sort_keys(.)" "$f")"
+  if [ "$got" = "$want" ]; then
+    pass "ingress selector (instanceLabelInSelector=$mode) is $got"
+  else
+    fail "ingress selector (instanceLabelInSelector=$mode) is $got, want $want"
+  fi
+  # the selector selects its own pods: a subset of the pod labels
+  pod="$(yq -o=json -I=0 "$ing_dep | .spec.template.metadata.labels" "$f")"
+  if ! yq -n -e "($want) as \$s | ($pod) as \$p | \$s | to_entries | all_c(\$p[.key] == .value)" >/dev/null 2>&1; then
+    fail "ingress selector ($mode) is not a subset of pod labels $pod"
+  fi
+  if [ "$(printf '%s' "$pod" | yq -p=json ".\"$inst\"")" != "$release" ]; then
+    fail "ingress pod labels lost $inst ($mode)"
+  fi
+  if [ "$(yq "$ing_dep | .spec.template.spec.serviceAccountName" "$f")" != synapse-operator ]; then
+    fail "ingress Deployment ($mode) does not use the operator's ServiceAccount"
+  fi
+done
+wantargs='["--ingress-mode","--ingress-class=synapse","--upstreams-out-configmap=ns/up","--cluster-domain=cluster.local","--resolve-backend-endpoints","--metrics-bind-address=:8080","--health-probe-bind-address=:8081"]'
+got="$(yq -o=json -I=0 "$ing_dep | .spec.template.spec.containers[0].args" "$work/ing-true.yaml")"
+if [ "$got" = "$wantargs" ]; then pass "ingress args at their defaults"; else fail "ingress args are $got, want $wantargs"; fi
+if render "${ing_set[@]}" --set ingress.gatewayAPI=true --set ingress.resolveBackendClusterIPs=true \
+  --set ingress.ingressClass=edge --set ingress.clusterDomain=c.local \
+  --set 'ingress.extraArgs={--zap-log-level=debug}' --set ingress.replicaCount=2 >"$work/ing-all.yaml" 2>"$work/ing-all.err"; then
+  wantargs='["--ingress-mode","--ingress-class=edge","--upstreams-out-configmap=ns/up","--cluster-domain=c.local","--resolve-backend-cluster-ips","--resolve-backend-endpoints","--gateway-api","--metrics-bind-address=:8080","--health-probe-bind-address=:8081","--zap-log-level=debug"]'
+  got="$(yq -o=json -I=0 "$ing_dep | .spec.template.spec.containers[0].args" "$work/ing-all.yaml")"
+  if [ "$got" = "$wantargs" ]; then pass "ingress args with every option set"; else fail "ingress args are $got, want $wantargs"; fi
+  if [ "$(yq "$ing_dep | .spec.replicas" "$work/ing-all.yaml")" != 2 ]; then fail "ingress.replicaCount was not applied"; fi
+  gw='select(.kind == "ClusterRole") | .rules[] | select(.apiGroups[0] == "gateway.networking.k8s.io") | .resources[]'
+  if [ "$(yq "$gw" "$work/ing-all.yaml" | wc -l)" = 6 ]; then
+    pass "ingress.gatewayAPI adds the Gateway API rules"
+  else
+    fail "ingress.gatewayAPI did not add the Gateway API rules"
+  fi
+else
+  fail "ingress with every option: render failed: $(cat "$work/ing-all.err")"
+fi
+# without ingress.gatewayAPI (and without the main gatewayAPI) no Gateway rule
+if grep -q 'gateway.networking.k8s.io' "$work/ing-true.yaml"; then
+  fail "Gateway API RBAC is rendered although ingress.gatewayAPI is off"
+else
+  pass "no Gateway API RBAC without ingress.gatewayAPI"
+fi
+
+# image falls back to appVersion; the SA follows the shared helper
+if render --set ingress.enabled=true --set ingress.upstreamsOutConfigMap=a/b >"$work/ing-def.yaml" 2>"$work/ing-def.err"; then
+  d='select(.kind == "Deployment" and .metadata.name == "check-synapse-operator-ingress")'
+  want="$(yq '.image.repository' "$chart/values.yaml"):$(yq '.appVersion' "$chart/Chart.yaml")"
+  got="$(yq "$d | .spec.template.spec.containers[0].image" "$work/ing-def.yaml")"
+  if [ "$got" = "$want" ]; then pass "ingress image defaults to $want"; else fail "ingress image is '$got', want $want"; fi
+  got="$(yq "$d | .spec.template.spec.serviceAccountName" "$work/ing-def.yaml")"
+  if [ "$got" = check-synapse-operator ]; then
+    pass "ingress ServiceAccount follows the helper ($got)"
+  else
+    fail "ingress ServiceAccount is '$got', want check-synapse-operator"
+  fi
+else
+  fail "ingress with defaults: render failed: $(cat "$work/ing-def.err")"
+fi
+# the same hardening as the operator: read-only root filesystem plus /tmp
+c="$ing_dep | .spec.template.spec"
+if [ "$(yq "$c.containers[0].securityContext.readOnlyRootFilesystem" "$work/ing-true.yaml")" = true ] &&
+  [ "$(yq "$c.containers[0].volumeMounts[0].mountPath" "$work/ing-true.yaml")" = /tmp ] &&
+  [ "$(yq "$c.volumes[0] | has(\"emptyDir\")" "$work/ing-true.yaml")" = true ] &&
+  [ "$(yq "$c.securityContext.runAsNonRoot" "$work/ing-true.yaml")" = true ]; then
+  pass "ingress container is read-only with a /tmp emptyDir, pod runs non-root"
+else
+  fail "ingress container lacks readOnlyRootFilesystem, the /tmp emptyDir or the pod securityContext"
+fi
+# gates: gatewayAPI alone, and enabled=false, render nothing of it
+if render --set ingress.gatewayAPI=true >"$work/ing-gwonly.yaml" 2>&1 && ! grep -q 'gateway.networking.k8s.io' "$work/ing-gwonly.yaml"; then
+  pass "ingress.gatewayAPI without ingress.enabled renders no Gateway rule"
+else
+  fail "ingress.gatewayAPI without ingress.enabled renders (or fails to render) Gateway rules"
+fi
+if render --set enabled=false --set ingress.enabled=true --set ingress.upstreamsOutConfigMap=a/b >"$work/ing-dis.yaml" 2>&1 && ! grep -q '^kind:' "$work/ing-dis.yaml"; then
+  pass "enabled=false renders no ingress Deployment either"
+else
+  fail "enabled=false with ingress.enabled still renders objects"
+fi
+
+# 7c. the two refusals
+if render --set ingress.enabled=true >/dev/null 2>"$work/ing-nocm.err"; then
+  fail "ingress.enabled without ingress.upstreamsOutConfigMap rendered"
+elif grep -q 'ingress.upstreamsOutConfigMap' "$work/ing-nocm.err"; then
+  pass "ingress.enabled without ingress.upstreamsOutConfigMap fails, naming the key"
+else
+  fail "failed, but without naming ingress.upstreamsOutConfigMap: $(cat "$work/ing-nocm.err")"
+fi
+if render "${ing_set[@]}" --set ingressMode=true >/dev/null 2>"$work/ing-both.err"; then
+  fail "ingress.enabled together with ingressMode rendered"
+elif grep -q 'ingress.enabled' "$work/ing-both.err" && grep -q 'ingressMode' "$work/ing-both.err"; then
+  pass "ingress.enabled with ingressMode fails, naming both keys"
+else
+  fail "failed, but without naming ingress.enabled and ingressMode: $(cat "$work/ing-both.err")"
+fi
+
+# 7d. the same objects as the synapse-stack's operator.ingress. Needs the stack's
+# dependencies built (helm dependency build charts/synapse-stack); skipped only
+# when they are missing and CI is unset.
+cat >"$work/stack-ing.yaml" <<'YAML'
+operator:
+  nodeSelector: {disk: ssd}
+  tolerations:
+    - key: k
+      operator: Exists
+  imagePullSecrets:
+    - name: pull
+  ingress:
+    enabled: true
+    upstreamsOutConfigMap: ns/up
+    ingressClass: edge
+    clusterDomain: c.local
+    resolveBackendClusterIPs: true
+    gatewayAPI: true
+    replicaCount: 2
+    extraArgs: ["--zap-log-level=debug"]
+    resources:
+      requests: {cpu: 10m, memory: 64Mi}
+      limits: {cpu: 300m, memory: 256Mi}
+YAML
+cat >"$work/flat-ing.yaml" <<'YAML'
+fullnameOverride: synapse-operator
+image:
+  tag: "0.1.11"
+instanceLabelInSelector: false
+nodeSelector: {disk: ssd}
+tolerations:
+  - key: k
+    operator: Exists
+imagePullSecrets:
+  - name: pull
+ingress:
+  enabled: true
+  upstreamsOutConfigMap: ns/up
+  ingressClass: edge
+  clusterDomain: c.local
+  resolveBackendClusterIPs: true
+  gatewayAPI: true
+  replicaCount: 2
+  extraArgs: ["--zap-log-level=debug"]
+  resources:
+    requests: {cpu: 10m, memory: 64Mi}
+    limits: {cpu: 300m, memory: 256Mi}
+YAML
+echo "==> ingress-mode Deployment against the synapse-stack"
+if ! helm template stack "$root/charts/synapse-stack" -f "$work/stack-ing.yaml" >"$work/stack-ing.out.yaml" 2>"$work/stack-ing.err"; then
+  if grep -q 'missing in charts/ directory' "$work/stack-ing.err" && [ -z "${CI:-}" ]; then
+    echo "skip: synapse-stack dependencies are not built (helm dependency build charts/synapse-stack)"
+  else
+    fail "synapse-stack render failed: $(cat "$work/stack-ing.err")"
+  fi
+elif ! render -f "$work/flat-ing.yaml" >"$work/flat-ing.out.yaml" 2>"$work/flat-ing.err"; then
+  fail "flat ingress render failed: $(cat "$work/flat-ing.err")"
+else
+  s="$work/stack-ing.out.yaml"
+  h="$work/flat-ing.out.yaml"
+  if [ "$(yq "$ing_dep | .metadata.name" "$s")" != synapse-operator-ingress ]; then
+    fail "stack render has no synapse-operator-ingress Deployment: the comparison is vacuous"
+  fi
+  for q in \
+    '.metadata.name' \
+    '.metadata.namespace' \
+    '.spec.replicas' \
+    '.spec.selector.matchLabels | sort_keys(.)' \
+    '.spec.template.spec.serviceAccountName' \
+    '.spec.template.spec.containers[0].image' \
+    '.spec.template.spec.containers[0] | del(.securityContext, .volumeMounts)' \
+    '.spec.template.spec | del(.securityContext, .volumes, .containers)'; do
+    a="$(yq -o=json -I=0 "$ing_dep | $q | sort_keys(..)" "$s")"
+    b="$(yq -o=json -I=0 "$ing_dep | $q | sort_keys(..)" "$h")"
+    if [ -n "$a" ] && [ "$a" != null ] && [ "$a" = "$b" ]; then
+      pass "stack and chart agree on ingress $q"
+    else
+      fail "ingress $q differs: stack $a, chart $b"
+    fi
+  done
+  for k in nodeSelector tolerations imagePullSecrets; do
+    if [ "$(yq "$ing_dep | .spec.template.spec | has(\"$k\")" "$h")" != true ]; then
+      fail "ingress pod spec has no $k: the fixture does not exercise it"
+    fi
+  done
+  # the ServiceAccount the Deployment names is rendered
+  sa="$(yq "$ing_dep | .spec.template.spec.serviceAccountName" "$h")"
+  if [ "$(yq "select(.kind == \"ServiceAccount\") | .metadata.name" "$h")" != "$sa" ]; then
+    fail "the chart renders no ServiceAccount named $sa"
+  fi
+  # RBAC: every rule outside the core group is the stack's; core-group rules
+  # of this chart may grant more verbs (it also serves the resolver paths) but
+  # never fewer.
+  nc='select(.kind == "ClusterRole") | .rules | map(select(.apiGroups[0] != "")) | sort_by(.apiGroups[0] + .resources[0])'
+  a="$(yq -o=json -I=0 "$nc" "$s")"
+  b="$(yq -o=json -I=0 "$nc" "$h")"
+  if [ -n "$a" ] && [ "$a" = "$b" ]; then
+    pass "stack and chart agree on the non-core ClusterRole rules"
+  else
+    fail "non-core ClusterRole rules differ: stack $a, chart $b"
+  fi
+  for r in configmaps secrets services nodes events; do
+    vq="select(.kind == \"ClusterRole\") | .rules | map(select(.resources[0] == \"$r\") | .verbs) | flatten | sort | unique"
+    a="$(yq -o=json -I=0 "$vq" "$s")"
+    b="$(yq -o=json -I=0 "$vq" "$h")"
+    if [ "$a" != '[]' ] && [ "$(yq -n -o=json -I=0 "($a - $b) | length")" = 0 ]; then
+      pass "chart grants at least the stack's verbs on $r"
+    else
+      fail "chart grants fewer verbs on $r than the stack: stack $a, chart $b"
+    fi
+  done
 fi
 
 exit "$failed"

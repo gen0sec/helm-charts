@@ -18,7 +18,10 @@ type: application
 # synapse build with the atomic reload-publication fix; see values.yaml.
 # 2.2.0: instanceLabelInSelector (default true, no render change) lets the
 # selectors omit app.kubernetes.io/instance, to match an existing release.
-version: 2.2.0
+# 2.3.0: ingress.* renders the ingress-mode companion Deployment
+# (<fullname>-ingress) the synapse-stack carries as operator.ingress.*. Off by
+# default, so nothing renders differently until ingress.enabled is set.
+version: 2.3.0
 appVersion: "0.1.11"
 home: https://gen0sec.com
 icon: https://raw.githubusercontent.com/gen0sec/helm-charts/main/images/logo.png
