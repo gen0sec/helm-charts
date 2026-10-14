@@ -61,13 +61,24 @@ jobs:
 
       - name: Build chart dependencies
         run: |
-          # No `|| true`. Swallowing a failure here is how a release ships a
-          # chart with an EMPTY charts/ directory: chart-releaser packages
-          # whatever is on disk, and a gated subchart that is simply absent
-          # looks exactly like one that is turned off.
+          # No `|| true`: a stale Chart.lock or a missing repo must stop the
+          # release early and clearly, not surface later inside chart-releaser.
+          # This also fills charts/synapse/charts before chart-releaser
+          # re-packs synapse into the stack.
           set -euo pipefail
+          # Charts that others pull in via file:// go first. The glob sorts
+          # synapse-stack before synapse, and a parent bundles its file://
+          # subchart as it is on disk: built too early, the stack carries
+          # synapse WITHOUT its own subcharts and every later step passes
+          # against an incomplete stack.
+          first=$(grep -hoE 'file://\.\./[^"[:space:]]+' charts/*/Chart.yaml | sed 's|file://\.\./||' | sort -u | tr '\n' ' ')
+          for name in $first; do
+            helm dependency build "charts/$name"
+          done
           for chart in charts/*/; do
+            name=$(basename "$chart")
             [ -f "$chart/Chart.yaml" ] || continue
+            case " $first" in *" $name "*) continue ;; esac
             helm dependency build "$chart"
           done
 

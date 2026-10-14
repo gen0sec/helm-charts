@@ -45,8 +45,19 @@ jobs:
       - name: Build chart dependencies
         run: |
           set -euo pipefail
+          # Charts that others pull in via file:// go first. The glob sorts
+          # synapse-stack before synapse, and a parent bundles its file://
+          # subchart as it is on disk: built too early, the stack carries
+          # synapse WITHOUT its own subcharts and every later step passes
+          # against an incomplete stack.
+          first=$(grep -hoE 'file://\.\./[^"[:space:]]+' charts/*/Chart.yaml | sed 's|file://\.\./||' | sort -u | tr '\n' ' ')
+          for name in $first; do
+            helm dependency build "charts/$name"
+          done
           for chart in charts/*/; do
+            name=$(basename "$chart")
             [ -f "$chart/Chart.yaml" ] || continue
+            case " $first" in *" $name "*) continue ;; esac
             helm dependency build "$chart"
           done
 
