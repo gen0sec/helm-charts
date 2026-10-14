@@ -1,4 +1,4 @@
-{{- if and .Values.operator.enabled .Values.operator.rbac.create }}
+{{- if and .Values.enabled .Values.rbac.create }}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -60,7 +60,7 @@ rules:
   - apiGroups: [""]
     resources: ["events"]
     verbs: ["create", "patch", "update"]
-  {{- if .Values.operator.gatewayAPI }}
+  {{- if .Values.gatewayAPI }}
   # --gateway-api. Kept behind the value because the CRDs are not present on
   # every cluster, and an unconditional grant misleads an RBAC audit.
   - apiGroups: ["gateway.networking.k8s.io"]

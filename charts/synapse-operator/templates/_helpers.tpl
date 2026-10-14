@@ -5,12 +5,12 @@ surprise. Selector labels are an immutable subset of all-labels.
 */}}
 
 {{- define "synapse-operator.name" -}}
-{{- default "synapse-operator" .Values.operator.nameOverride | trunc 63 | trimSuffix "-" -}}
+{{- default "synapse-operator" .Values.nameOverride | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
 {{- define "synapse-operator.fullname" -}}
-{{- if .Values.operator.fullnameOverride -}}
-{{- .Values.operator.fullnameOverride | trunc 63 | trimSuffix "-" -}}
+{{- if .Values.fullnameOverride -}}
+{{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" -}}
 {{- else -}}
 {{- $name := include "synapse-operator.name" . -}}
 {{- if contains $name .Release.Name -}}
@@ -45,9 +45,9 @@ app.kubernetes.io/part-of: synapse
 {{- end -}}
 
 {{- define "synapse-operator.serviceAccountName" -}}
-{{- if .Values.operator.serviceAccount.create -}}
-{{- default (include "synapse-operator.fullname" .) .Values.operator.serviceAccount.name -}}
+{{- if .Values.serviceAccount.create -}}
+{{- default (include "synapse-operator.fullname" .) .Values.serviceAccount.name -}}
 {{- else -}}
-{{- default "default" .Values.operator.serviceAccount.name -}}
+{{- default "default" .Values.serviceAccount.name -}}
 {{- end -}}
 {{- end -}}

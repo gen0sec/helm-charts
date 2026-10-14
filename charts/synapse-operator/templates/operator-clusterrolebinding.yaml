@@ -1,4 +1,4 @@
-{{- if and .Values.operator.enabled .Values.operator.rbac.create }}
+{{- if and .Values.enabled .Values.rbac.create }}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
@@ -21,7 +21,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: {{ include "synapse-operator.fullname" . }}-leader-election
-  namespace: {{ default .Values.global.namespaces.operator .Values.operator.leaderElectionNamespace }}
+  namespace: {{ default .Values.global.namespaces.operator .Values.leaderElectionNamespace }}
   labels:
     {{- include "synapse-operator.labels" . | nindent 4 }}
 rules:
@@ -39,7 +39,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: {{ include "synapse-operator.fullname" . }}-leader-election
-  namespace: {{ default .Values.global.namespaces.operator .Values.operator.leaderElectionNamespace }}
+  namespace: {{ default .Values.global.namespaces.operator .Values.leaderElectionNamespace }}
   labels:
     {{- include "synapse-operator.labels" . | nindent 4 }}
 roleRef:
