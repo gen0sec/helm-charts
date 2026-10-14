@@ -17,3 +17,17 @@ bound to it - granting every pod that uses `default` the operator's rights.
 {{- if and .Values.enabled (not .Values.serviceAccount.create) (not .Values.serviceAccount.name) }}
 {{- fail "serviceAccount.create is not true but serviceAccount.name is empty: the operator would run as (and, with rbac.create, bind its RBAC to) the namespace's `default` ServiceAccount. Set serviceAccount.name to an existing ServiceAccount (`default` to use that one on purpose), or set serviceAccount.create=true." }}
 {{- end }}
+{{- /*
+The ingress-mode companion Deployment (ingress.enabled) needs the ConfigMap it
+writes, and replaces ingressMode rather than adding to it: ingress-mode runs
+instead of config-hash inside one process, so the main operator must not be in
+it too.
+*/ -}}
+{{- if .Values.ingress.enabled }}
+{{- if not .Values.ingress.upstreamsOutConfigMap }}
+{{- fail "ingress.upstreamsOutConfigMap is required when ingress.enabled: set it to \"<namespace>/<name>\" of the proxy ConfigMap whose upstreams.yaml key the ingress-mode operator renders" }}
+{{- end }}
+{{- if .Values.ingressMode }}
+{{- fail "ingress.enabled and ingressMode cannot both be set: ingress.enabled adds a separate ingress-mode Deployment next to the config-hash operator, and ingressMode would turn the main operator into a second one. Set ingressMode to false (the ingress.* values configure the ingress-mode Deployment)." }}
+{{- end }}
+{{- end }}

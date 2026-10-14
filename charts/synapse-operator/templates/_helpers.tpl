@@ -60,3 +60,38 @@ app.kubernetes.io/part-of: synapse
 {{- default "default" .Values.serviceAccount.name -}}
 {{- end -}}
 {{- end -}}
+
+{{/*
+The ingress-mode companion Deployment (ingress.enabled). Its name is
+<fullname>-ingress, cut so the suffix still fits in 63 characters.
+*/}}
+{{- define "synapse-operator.ingressFullname" -}}
+{{- printf "%s-ingress" (include "synapse-operator.fullname" . | trunc 54 | trimSuffix "-") -}}
+{{- end -}}
+
+{{/*
+Selector labels of the ingress Deployment. They must not reuse selectorLabels,
+which hard-codes component: controller (the config-hash operator's selector).
+IMMUTABLE once set, like selectorLabels, and honouring instanceLabelInSelector.
+*/}}
+{{- define "synapse-operator.ingressSelectorLabels" -}}
+app.kubernetes.io/name: {{ printf "%s-ingress" (include "synapse-operator.name" . | trunc 54 | trimSuffix "-") }}
+{{- if .Values.instanceLabelInSelector }}
+app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end }}
+app.kubernetes.io/component: ingress-controller
+{{- end -}}
+
+{{/*
+Labels for the ingress Deployment's metadata and pod template; a superset of
+its selector (instance is always here).
+*/}}
+{{- define "synapse-operator.ingressLabels" -}}
+helm.sh/chart: {{ include "synapse-operator.chart" . }}
+app.kubernetes.io/name: {{ printf "%s-ingress" (include "synapse-operator.name" . | trunc 54 | trimSuffix "-") }}
+app.kubernetes.io/instance: {{ .Release.Name }}
+app.kubernetes.io/component: ingress-controller
+app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+app.kubernetes.io/managed-by: {{ .Release.Service }}
+app.kubernetes.io/part-of: synapse
+{{- end -}}

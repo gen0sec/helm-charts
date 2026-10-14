@@ -161,6 +161,58 @@ edgeProducer:
   enabled: false
   interval: ""
 
+# ----- Ingress-mode Deployment (SEPARATE from the operator above) -----
+# When enabled, deploy a second operator in --ingress-mode, named
+# <fullname>-ingress, that renders the synapse-class Ingresses into the proxy's
+# upstreams.yaml ConfigMap key, cluster-wide. It runs ALONGSIDE the config-hash
+# operator (ingress-mode replaces config-hash within one process, so they are
+# separate Deployments sharing one ServiceAccount), and is the synapse-stack's
+# operator.ingress. Do NOT also set ingressMode: the render refuses both.
+# IMPORTANT: when enabled, also set `proxy.synapse.upstreams: ""` in the
+# synapse-stack so the operator owns the routes.
+ingress:
+  enabled: false
+  replicaCount: 1
+  ingressClass: synapse
+  # "<namespace>/<name>" of the proxy ConfigMap whose upstreams.yaml key the
+  # operator renders. REQUIRED when ingress.enabled.
+  upstreamsOutConfigMap: ""
+  clusterDomain: cluster.local
+  # Emit backend ClusterIP:port instead of the Service FQDN (skips per-
+  # request DNS); falls back to FQDN for headless / unallocated Services.
+  resolveBackendClusterIPs: false
+  # Default ON from synapse chart 0.5.0. Renders the READY pod IPs from
+  # EndpointSlices as the server list instead of a single Service address,
+  # so the proxy connects straight to pods and a replaced pod is picked up
+  # on the next render rather than after synapse's DNS-cache TTL.
+  #
+  # REQUIRES a synapse build carrying the atomic reload-publication fix.
+  # Endpoint rendering re-renders on pod churn, so a rollout that used to
+  # produce no reloads now produces one per endpoint event; against an older
+  # proxy that multiplies exposure to a reload race that can 502. If you pin
+  # image.tag to a release older than that fix, set this back to false.
+  #
+  # Also strongly prefers the config-sync sidecar. In central mode every
+  # re-render is a ConfigMap write, and without the sidecar each one waits
+  # out kubelet's mount sync (~1m) - you pay the churn without the
+  # freshness. See examples/config-sync-values.yaml.
+  #
+  # Falls back to ClusterIP/FQDN when the endpoint set is missing or empty
+  # (ExternalName, headless, scaled to zero), so a route is never blanked.
+  resolveBackendEndpoints: true
+  # Also reconcile Gateway API (GatewayClass/Gateway/HTTPRoute) into the same
+  # upstreams render. Requires the Gateway API CRDs to be installed. Drives
+  # both the --gateway-api flag and its RBAC, so the two cannot drift.
+  gatewayAPI: false
+  extraArgs: []
+  resources:
+    requests:
+      cpu: 5m
+      memory: 32Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
+
 # Extra raw args appended to the manager invocation. Use for
 # debug/profile flags not yet exposed individually here.
 extraArgs: []
