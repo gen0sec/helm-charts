@@ -13,6 +13,12 @@
 #   4. (any BASE) the default image is <image.repository>:<appVersion>, with no
 #      pin; checks 1 and 2 pin image.tag, so they cannot see that fallback
 #   5. a leftover operator: block fails with the migration message
+#   6. instanceLabelInSelector: each of the five selectors (Deployment,
+#      Service, PDB, NetworkPolicy, ServiceMonitor) equals exactly
+#      {name, component} when false, and {name, component, instance=release}
+#      when true or when left unset (the default). Pod and Deployment labels
+#      keep instance in every mode, and each selector is a subset of the pod
+#      labels
 #
 # Only chart/version labels are normalised. The head render is pinned to the
 # base chart's appVersion (image.tag), so the image is NOT compared by the
@@ -266,6 +272,56 @@ elif grep -q "moved from operator" "$work/legacy.err" && grep -q "2.0.0" "$work/
   pass "the render fails with the migration message"
 else
   fail "the render failed, but not with the migration message: $(cat "$work/legacy.err")"
+fi
+
+# --- 6. instanceLabelInSelector -------------------------------------------------
+# Selectors are immutable on a Deployment, so a release adopted from a chart
+# whose selector has no instance label needs the same selector here.
+echo "==> instanceLabelInSelector"
+inst=app.kubernetes.io/instance
+# One JSON object per selector in the render: the Deployment's matchLabels, the
+# Service's selector, and the PDB, ServiceMonitor and NetworkPolicy ones.
+selectors='select(.kind == "Deployment") | .spec.selector.matchLabels,
+  select(.kind == "Service") | .spec.selector,
+  select(.kind == "PodDisruptionBudget" or .kind == "ServiceMonitor") | .spec.selector.matchLabels,
+  select(.kind == "NetworkPolicy") | .spec.podSelector.matchLabels'
+sel_base='{"app.kubernetes.io/component":"controller","app.kubernetes.io/name":"synapse-operator"}'
+sel_with="{\"app.kubernetes.io/component\":\"controller\",\"$inst\":\"$release\",\"app.kubernetes.io/name\":\"synapse-operator\"}"
+# default sets nothing: it must behave as true.
+for mode in true false default; do
+  set_args=()
+  [ "$mode" = default ] || set_args=(--set "instanceLabelInSelector=$mode")
+  want="$sel_with"
+  [ "$mode" = false ] && want="$sel_base"
+  if ! render -f "$work/flat.yaml" "${set_args[@]}" >"$work/sel-$mode.yaml" 2>"$work/sel-$mode.err"; then
+    fail "instanceLabelInSelector=$mode: render failed: $(cat "$work/sel-$mode.err")"
+    continue
+  fi
+  n="$(yq -o=json -I=0 "$selectors" "$work/sel-$mode.yaml" | wc -l)"
+  if [ "$n" -ne 5 ]; then
+    fail "instanceLabelInSelector=$mode: found $n selectors, want 5 (Deployment, Service, PDB, NetworkPolicy, ServiceMonitor)"
+    continue
+  fi
+  pod="$(yq -o=json -I=0 'select(.kind == "Deployment") | .spec.template.metadata.labels' "$work/sel-$mode.yaml")"
+  while IFS= read -r sel; do
+    got="$(printf '%s' "$sel" | yq -p=json -o=json -I=0 'sort_keys(.)')"
+    if [ "$got" != "$want" ]; then
+      fail "instanceLabelInSelector=$mode: selector is $got, want $want"
+    fi
+    # the selector must also select the pod: a subset of the pod labels
+    if ! yq -n -e "($sel) as \$s | ($pod) as \$p | \$s | to_entries | all_c(\$p[.key] == .value)" >/dev/null 2>&1; then
+      fail "instanceLabelInSelector=$mode: selector $sel is not a subset of pod labels $pod"
+    fi
+  done < <(yq -o=json -I=0 "$selectors" "$work/sel-$mode.yaml")
+  if [ "$(printf '%s' "$pod" | yq -p=json ".\"$inst\" != null")" != true ]; then
+    fail "instanceLabelInSelector=$mode: pod labels lost $inst"
+  fi
+  if [ "$(yq 'select(.kind == "Deployment") | .metadata.labels."'$inst'" != null' "$work/sel-$mode.yaml")" != true ]; then
+    fail "instanceLabelInSelector=$mode: Deployment metadata labels lost $inst"
+  fi
+done
+if [ "$failed" = 0 ]; then
+  pass "instanceLabelInSelector: selectors are {name, component} when false and add instance when true or unset"
 fi
 
 exit "$failed"
