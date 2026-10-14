@@ -40,5 +40,14 @@ for chartyaml in "$root"/charts/*/Chart.yaml; do
   fi
 done
 
+# The other direction: a row for a chart that no longer exists.
+# shellcheck disable=SC2016  # backticks are literal markdown
+while IFS= read -r listed; do
+  if [ ! -f "$root/charts/$listed/Chart.yaml" ]; then
+    echo "README.md: chart table lists $listed, but charts/$listed/Chart.yaml does not exist" >&2
+    rc=1
+  fi
+done < <(grep -oE '^\| \[`[^`]+`\]\(charts/[^)]+\)' "$readme" | sed -E 's#.*\(charts/([^)]+)\)#\1#')
+
 [ "$rc" -eq 0 ] && echo "README chart table matches charts/*/Chart.yaml"
 exit "$rc"
