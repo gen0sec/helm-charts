@@ -31,8 +31,9 @@ fail() {
 }
 pass() { echo "ok:   $*"; }
 
+# The monitoring API is declared so the ServiceMonitor template is exercised.
 render() {
-  helm template "$release" "$chart" "$@"
+  helm template "$release" "$chart" --api-versions monitoring.coreos.com/v1 "$@"
 }
 
 # Chart.yaml's version legitimately differs from the base's and lands in the
@@ -154,7 +155,7 @@ else
     local bargs=() hargs=()
     [ "$bv" = - ] || bargs=(-f "$bv")
     [ "$hv" = - ] || hargs=(-f "$hv")
-    helm template "$release" "$base_chart" "${bargs[@]}" >"$work/$name.base.yaml"
+    helm template "$release" "$base_chart" --api-versions monitoring.coreos.com/v1 "${bargs[@]}" >"$work/$name.base.yaml"
     if ! render "${hargs[@]}" >"$work/$name.head.yaml" 2>"$work/$name.err"; then
       fail "$name: head render failed: $(cat "$work/$name.err")"
       return
