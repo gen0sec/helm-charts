@@ -133,6 +133,22 @@ jobs:
       - name: Install Helm
         uses: azure/setup-helm@v4
 
+      # The check also renders the synapse-stack, which needs its dependencies
+      # built (synapse first: the stack takes it from file://, and it has
+      # dependencies of its own). Same steps as lint-and-template, with the same
+      # explicit fallback to resolving.
+      - name: Add repositories for dependencies
+        run: |
+          helm repo add valkey https://valkey.io/valkey-helm/
+          helm repo update
+
+      - name: Build chart dependencies
+        run: |
+          for chart in charts/*/; do
+            [ -f "$chart/Chart.yaml" ] || continue
+            helm dependency build "$chart" || helm dependency update "$chart"
+          done
+
       - name: shellcheck
         run: shellcheck hack/check-operator-chart.sh
 
