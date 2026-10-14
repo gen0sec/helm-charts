@@ -279,7 +279,7 @@ KEYENV='select(.kind == "Deployment") | .spec.template.spec.containers[0].env[] 
 # The rules a producer adds; printed as compact JSON, one per line, in template order.
 PRULES='select(.kind == "ClusterRole") | .rules[] | [.apiGroups, .resources, .verbs] | select(.[1] | map(test("^(pods|namespaces|networkpolicies)$")) | any)'
 
-# expect NAME FILE WANT: the rendered output of the yq query in FILE is WANT.
+# expect NAME GOT WANT: passes when the two values are equal.
 expect() {
   local name="$1" got="$2" want="$3"
   if [ "$got" = "$want" ]; then
@@ -288,9 +288,9 @@ expect() {
     fail "$name: got '$got', want '$want'"
   fi
 }
-# producer_case NAME 'ARGS...' : renders with the helm args, leaves the output
-# in $work/NAME.yaml, and prints the producer-related container args joined by
-# a space.
+# producer_case NAME HELM_ARGS... : renders with the helm args and leaves the
+# output in $work/NAME.yaml; prints nothing, fails (after reporting) when the
+# render fails.
 producer_case() {
   local name="$1"
   shift
@@ -341,6 +341,14 @@ fi
 if producer_case rbac-off --set edgeProducer.enabled=true --set rbac.create=false; then
   expect "rbac.create=false: no producer rules" "$(prules "$work/rbac-off.yaml")" ""
 fi
+# Position: the producer and cluster args come before extraArgs, which stay last
+# so a user can still override them. The tail is unfiltered on purpose.
+if producer_case args-order --set identityProducer.enabled=true --set clusterId=c1 \
+  --set 'extraArgs[0]=--zap-log-level=debug'; then
+  expect "extraArgs stay last, after the producer args" \
+    "$(yq -N 'select(.kind == "Deployment") | .spec.template.spec.containers[0].args[]' "$work/args-order.yaml" | tail -n 4 | paste -sd' ' -)" \
+    "$URL --identity-producer --cluster-id=c1 --zap-log-level=debug"
+fi
 # The key must come before extra env, after the operator's own POD_* variables.
 if producer_case env-order --set identityProducer.enabled=true --set 'env[0].name=FOO' --set 'env[0].value=bar'; then
   expect "env order" "$(yq -N 'select(.kind == "Deployment") | .spec.template.spec.containers[0].env[].name' "$work/env-order.yaml" | paste -sd' ' -)" \
@@ -361,7 +369,13 @@ yq '{"operator": .}' "$work/producers-flat.yaml" >"$work/producers-stack.yaml"
 # Only the stack's own operator objects.
 SOBJ='select((.kind == "Deployment" or .kind == "ClusterRole") and .metadata.name == "synapse-operator")'
 if ! helm template stk "$stack" -f "$work/producers-stack.yaml" >"$work/stack.yaml" 2>"$work/stack.err"; then
-  echo "skip: the stack does not render (dependencies built?): $(head -n 1 "$work/stack.err")"
+  # Only an unbuilt dependency skips, and never in CI: a stack that cannot
+  # render must not make the comparison quietly disappear.
+  if [ -z "${CI:-}" ] && grep -q 'missing in charts/ directory' "$work/stack.err"; then
+    echo "skip: the stack's dependencies are not built: $(head -n 1 "$work/stack.err")"
+  else
+    fail "the stack does not render, so the producers cannot be compared with it: $(head -n 3 "$work/stack.err")"
+  fi
 else
   helm template stk "$stack" >"$work/stack-off.yaml"
   render -f "$work/producers-flat.yaml" >"$work/op.yaml"
