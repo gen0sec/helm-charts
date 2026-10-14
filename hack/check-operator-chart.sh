@@ -279,12 +279,22 @@ elif grep -q "serviceAccount.name" "$work/sa.err"; then
 else
   fail "the render failed, but not naming serviceAccount.name: $(cat "$work/sa.err")"
 fi
-if render --set serviceAccount.create=false --set serviceAccount.name=pre-made >"$work/sa2.out" 2>"$work/sa2.err" &&
-  [ "$(yq 'select(.kind == "ClusterRoleBinding") | .subjects[].name' "$work/sa2.out" | sort -u)" = pre-made ]; then
-  pass "serviceAccount.create=false with a name binds to that account"
-else
-  fail "serviceAccount.create=false with serviceAccount.name did not render a binding to it: $(cat "$work/sa2.err")"
-fi
+# sa_uses OUT NAME: the pod runs as NAME, both bindings name only NAME, and no
+# ServiceAccount object is rendered.
+sa_uses() {
+  [ "$(yq 'select(.kind == "Deployment") | .spec.template.spec.serviceAccountName' "$1")" = "$2" ] &&
+    [ "$(yq 'select(.kind == "ClusterRoleBinding") | .subjects[].name' "$1" | sort -u)" = "$2" ] &&
+    [ "$(yq 'select(.kind == "RoleBinding") | .subjects[].name' "$1" | sort -u)" = "$2" ] &&
+    [ "$(yq 'select(.kind == "ServiceAccount") | .kind' "$1" | wc -l)" = 0 ]
+}
+for sa in pre-made default; do
+  if render --set serviceAccount.create=false --set "serviceAccount.name=$sa" >"$work/sa2.out" 2>"$work/sa2.err" &&
+    sa_uses "$work/sa2.out" "$sa"; then
+    pass "serviceAccount.create=false with name=$sa runs and binds as $sa, creating none"
+  else
+    fail "serviceAccount.create=false with name=$sa did not run and bind as $sa: $(cat "$work/sa2.err")"
+  fi
+done
 if render --set enabled=false --set serviceAccount.create=false >/dev/null 2>"$work/sa3.err"; then
   pass "a disabled operator is not validated for its ServiceAccount"
 else
