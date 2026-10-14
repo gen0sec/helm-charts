@@ -152,7 +152,7 @@ Charts are published to GitHub Pages (`https://helm.gen0sec.com`) by one workflo
 2. Push a `v*` tag on a commit that is on `main`. The workflow fails if the tagged commit is not an ancestor of `origin/main`.
 3. chart-releaser packages only the charts that changed since the previous tag (the latest tag reachable from the commit before the tagged one). `skip_existing` only stops it from re-uploading a version that already has a release; it does not make it look at unchanged charts.
 
-If a release run fails part-way, re-run the workflow for the same tag: it looks at the same range again. A new tag on a later commit that changes nothing under `charts/` finds nothing to package. To recover, land a change to the affected chart with a new `version` and tag again, or run chart-releaser (`cr package`, `cr upload`, `cr index`) by hand.
+If a release run fails part-way, re-run the workflow for the same tag: it looks at the same range again. Do not rely on the next release to pick it up: a new tag on a later commit packages only the charts changed since the failed tag, so a chart changed only before it is never published. To recover, land a change to the affected chart with a new `version` and tag again, or run chart-releaser (`cr package`, `cr upload`, `cr index`) by hand.
 
 ---
 
