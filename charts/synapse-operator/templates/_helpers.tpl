@@ -32,13 +32,22 @@ tiny and conservative; anything that can change between releases
 */}}
 {{- define "synapse-operator.selectorLabels" -}}
 app.kubernetes.io/name: {{ include "synapse-operator.name" . }}
+{{- if .Values.instanceLabelInSelector }}
 app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end }}
 app.kubernetes.io/component: controller
 {{- end -}}
 
+{{/*
+Labels for metadata and the pod template. `instance` is always here, whether
+or not it is in the selector (instanceLabelInSelector), so the selector stays
+a subset of these.
+*/}}
 {{- define "synapse-operator.labels" -}}
 helm.sh/chart: {{ include "synapse-operator.chart" . }}
-{{ include "synapse-operator.selectorLabels" . }}
+app.kubernetes.io/name: {{ include "synapse-operator.name" . }}
+app.kubernetes.io/instance: {{ .Release.Name }}
+app.kubernetes.io/component: controller
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 app.kubernetes.io/part-of: synapse
