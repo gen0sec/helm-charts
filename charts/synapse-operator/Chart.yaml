@@ -6,8 +6,10 @@ type: application
 # Bumped: serviceAccount.create=false with an empty serviceAccount.name now
 # fails the render (templates/validate-values.yaml). It used to run the operator
 # as the namespace's `default` ServiceAccount and bind the ClusterRole and the
-# leader-election Role to it. Set serviceAccount.name to use an existing one.
-# Defaults and every valid configuration render as before.
+# leader-election Role to it. Setups with rbac.create=false and no name are
+# affected too (the pod still ran as `default`). Set serviceAccount.name to an
+# existing ServiceAccount, or to `default` if that is intended. Defaults are
+# unchanged.
 #
 # From 2.0.0: BREAKING. Every value moved from `operator:` to the top level
 # (operator.image.tag -> image.tag, operator.enabled -> enabled), so that this
