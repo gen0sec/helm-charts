@@ -11,6 +11,12 @@ enabled: true
 createNamespace: true
 nameOverride: ""
 fullnameOverride: ""
+# Put app.kubernetes.io/instance in the selectors (Deployment, Service, PDB,
+# NetworkPolicy, ServiceMonitor). Selectors are immutable on a Deployment: set
+# false to adopt a release whose selector is only {name, component}. Pod and
+# metadata labels carry instance either way. Changing this on an existing
+# release fails `helm upgrade`.
+instanceLabelInSelector: true
 
 image:
   repository: ghcr.io/gen0sec/synapse-operator
