@@ -9,3 +9,17 @@ settings, because nothing reads `.Values.operator` any more. Refuse it instead.
 {{- if kindIs "map" .Values.operator }}
 {{- fail (printf "values moved from operator.X to X in 2.0.0: drop the `operator:` level and put its keys at the top of your values (operator.image.tag -> image.tag, operator.enabled -> enabled). Found operator keys: %s. global.namespaces.operator is unchanged." (keys .Values.operator | sortAlpha | join ", ")) }}
 {{- end }}
+{{- /*
+The ingress-mode companion Deployment (ingress.enabled) needs the ConfigMap it
+writes, and replaces ingressMode rather than adding to it: ingress-mode runs
+instead of config-hash inside one process, so the main operator must not be in
+it too.
+*/ -}}
+{{- if .Values.ingress.enabled }}
+{{- if not .Values.ingress.upstreamsOutConfigMap }}
+{{- fail "ingress.upstreamsOutConfigMap is required when ingress.enabled: set it to \"<namespace>/<name>\" of the proxy ConfigMap whose upstreams.yaml key the ingress-mode operator renders" }}
+{{- end }}
+{{- if .Values.ingressMode }}
+{{- fail "ingress.enabled and ingressMode cannot both be set: ingress.enabled adds a separate ingress-mode Deployment next to the config-hash operator, and ingressMode would turn the main operator into a second one. Set ingressMode to false (the ingress.* values configure the ingress-mode Deployment)." }}
+{{- end }}
+{{- end }}
