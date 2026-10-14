@@ -13,10 +13,12 @@
 #   4. (any BASE) the default image is <image.repository>:<appVersion>, with no
 #      pin; checks 1 and 2 pin image.tag, so they cannot see that fallback
 #   5. a leftover operator: block fails with the migration message
-#   6. instanceLabelInSelector=false drops app.kubernetes.io/instance from
-#      every selector (Deployment, Service, PDB, NetworkPolicy, ServiceMonitor)
-#      while the pod labels keep it and still satisfy each selector; the
-#      default keeps it
+#   6. instanceLabelInSelector: each of the five selectors (Deployment,
+#      Service, PDB, NetworkPolicy, ServiceMonitor) equals exactly
+#      {name, component} when false, and {name, component, instance=release}
+#      when true or when left unset (the default). Pod and Deployment labels
+#      keep instance in every mode, and each selector is a subset of the pod
+#      labels
 #
 # Only chart/version labels are normalised. The head render is pinned to the
 # base chart's appVersion (image.tag), so the image is NOT compared by the
@@ -277,15 +279,21 @@ fi
 # whose selector has no instance label needs the same selector here.
 echo "==> instanceLabelInSelector"
 inst=app.kubernetes.io/instance
-# selectors prints one JSON object per selector in the render: the Deployment's
-# matchLabels, the Service's selector, and the PDB, NetworkPolicy and
-# ServiceMonitor ones.
+# One JSON object per selector in the render: the Deployment's matchLabels, the
+# Service's selector, and the PDB, ServiceMonitor and NetworkPolicy ones.
 selectors='select(.kind == "Deployment") | .spec.selector.matchLabels,
   select(.kind == "Service") | .spec.selector,
   select(.kind == "PodDisruptionBudget" or .kind == "ServiceMonitor") | .spec.selector.matchLabels,
   select(.kind == "NetworkPolicy") | .spec.podSelector.matchLabels'
-for mode in true false; do
-  if ! render -f "$work/flat.yaml" --set "instanceLabelInSelector=$mode" >"$work/sel-$mode.yaml" 2>"$work/sel-$mode.err"; then
+sel_base='{"app.kubernetes.io/component":"controller","app.kubernetes.io/name":"synapse-operator"}'
+sel_with="{\"app.kubernetes.io/component\":\"controller\",\"$inst\":\"$release\",\"app.kubernetes.io/name\":\"synapse-operator\"}"
+# default sets nothing: it must behave as true.
+for mode in true false default; do
+  set_args=()
+  [ "$mode" = default ] || set_args=(--set "instanceLabelInSelector=$mode")
+  want="$sel_with"
+  [ "$mode" = false ] && want="$sel_base"
+  if ! render -f "$work/flat.yaml" "${set_args[@]}" >"$work/sel-$mode.yaml" 2>"$work/sel-$mode.err"; then
     fail "instanceLabelInSelector=$mode: render failed: $(cat "$work/sel-$mode.err")"
     continue
   fi
@@ -296,16 +304,11 @@ for mode in true false; do
   fi
   pod="$(yq -o=json -I=0 'select(.kind == "Deployment") | .spec.template.metadata.labels' "$work/sel-$mode.yaml")"
   while IFS= read -r sel; do
-    has="$(printf '%s' "$sel" | yq -p=json ".\"$inst\" != null")"
-    if [ "$mode" = false ] && [ "$has" = true ]; then
-      fail "instanceLabelInSelector=false: selector $sel still has $inst"
-    elif [ "$mode" = true ] && [ "$has" = false ]; then
-      fail "instanceLabelInSelector=true: selector $sel lacks $inst"
+    got="$(printf '%s' "$sel" | yq -p=json -o=json -I=0 'sort_keys(.)')"
+    if [ "$got" != "$want" ]; then
+      fail "instanceLabelInSelector=$mode: selector is $got, want $want"
     fi
-    if [ "$(printf '%s' "$sel" | yq -p=json -o=json -I=0 'to_entries | map(select(.value != null)) | length')" -lt 2 ]; then
-      fail "instanceLabelInSelector=$mode: selector $sel is too small to select anything"
-    fi
-    # selector is a subset of the pod labels
+    # the selector must also select the pod: a subset of the pod labels
     if ! yq -n -e "($sel) as \$s | ($pod) as \$p | \$s | to_entries | all_c(\$p[.key] == .value)" >/dev/null 2>&1; then
       fail "instanceLabelInSelector=$mode: selector $sel is not a subset of pod labels $pod"
     fi
@@ -318,7 +321,7 @@ for mode in true false; do
   fi
 done
 if [ "$failed" = 0 ]; then
-  pass "instanceLabelInSelector toggles instance in all five selectors only"
+  pass "instanceLabelInSelector: selectors are {name, component} when false and add instance when true or unset"
 fi
 
 exit "$failed"
