@@ -3,8 +3,9 @@ name: synapse
 description: A Helm chart for Synapse reverse proxy with security features
 type: application
 
-# Bumped: refuse cert-manager and synapse's built-in ACME at the same time.
-version: 0.10.1
+# Bumped: Chart.lock was out of sync with Chart.yaml, so a clean
+# `helm dependency build` refused it. Lock regenerated.
+version: 0.10.2
 appVersion: "0.8.3"
 
 dependencies:

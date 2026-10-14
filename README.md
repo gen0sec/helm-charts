@@ -30,8 +30,8 @@ Helm charts for deploying the **Synapse** dataplane and its **Kubernetes operato
 
 | Chart | Version | App | Purpose |
 |---|---|---|---|
-| [`synapse-stack`](charts/synapse-stack) | 0.5.3 | 0.7.0 | **Umbrella** — two `synapse` workloads from one release, aliased `proxy` and `agent` |
-| [`synapse`](charts/synapse) | 0.4.2 | 0.7.0 | Synapse reverse proxy / dataplane. Depends on `valkey`; optional `clamav` (`clamavIntegration.enabled`) |
+| [`synapse-stack`](charts/synapse-stack) | 0.12.3 | 0.7.0 | **Umbrella** — two `synapse` workloads from one release, aliased `proxy` and `agent` |
+| [`synapse`](charts/synapse) | 0.10.2 | 0.7.0 | Synapse reverse proxy / dataplane. Depends on `valkey`; optional `clamav` (`clamavIntegration.enabled`) |
 | [`synapse-operator`](charts/synapse-operator) | 1.4.2 | 0.1.8 | The Synapse Kubernetes operator (config-sync controller) |
 
 `synapse-stack` deploys the **dataplane twice** from the same subchart, each alias getting its
