@@ -4,7 +4,7 @@
 
 <p align="center">
   <a href="https://github.com/gen0sec/helm-charts"><img src="https://img.shields.io/badge/License-Apache_2.0-green" alt="License - Apache 2.0"></a> &nbsp;
-  <a href="https://github.com/gen0sec/helm-charts/actions?query=branch%3Amain"><img src="https://github.com/gen0sec/helm-charts/actions/workflows/release-synapse-stack.yaml/badge.svg" alt="Release Synapse Stack"></a> &nbsp;
+  <a href="https://github.com/gen0sec/helm-charts/actions?query=branch%3Amain"><img src="https://github.com/gen0sec/helm-charts/actions/workflows/release-charts.yaml/badge.svg" alt="Release Charts"></a> &nbsp;
   <a href="https://github.com/gen0sec/helm-charts/releases"><img src="https://img.shields.io/github/release/gen0sec/helm-charts.svg?label=Release" alt="Release"></a> &nbsp;
   <a href="https://docs.gen0sec.com/"><img alt="Documentation" src="https://img.shields.io/badge/gen0sec-documentation-page?style=flat&link=https%3A%2F%2Fdocs.gen0sec.com%2F"></a> &nbsp;
   <a href="https://discord.gg/jzsW5Q6s9q"><img src="https://img.shields.io/discord/1377189913849757726?label=Discord" alt="Discord"></a> &nbsp;
@@ -30,9 +30,9 @@ Helm charts for deploying the **Synapse** dataplane and its **Kubernetes operato
 
 | Chart | Version | App | Purpose |
 |---|---|---|---|
-| [`synapse-stack`](charts/synapse-stack) | 0.5.3 | 0.7.0 | **Umbrella** — two `synapse` workloads from one release, aliased `proxy` and `agent` |
-| [`synapse`](charts/synapse) | 0.4.2 | 0.7.0 | Synapse reverse proxy / dataplane. Depends on `valkey`; optional `clamav` (`clamavIntegration.enabled`) |
-| [`synapse-operator`](charts/synapse-operator) | 1.4.2 | 0.1.8 | The Synapse Kubernetes operator (config-sync controller) |
+| [`synapse-stack`](charts/synapse-stack) | 0.12.2 | 0.8.3 | **Umbrella** — two `synapse` workloads from one release, aliased `proxy` and `agent`, plus the operator (`operator.enabled`, on by default) |
+| [`synapse`](charts/synapse) | 0.10.1 | 0.8.3 | Synapse reverse proxy / dataplane. Optional `dragonfly` (`dragonfly.enabled`) and `cert-manager` (`cert-manager.enabled`) subcharts; optional ClamAV scanning (`clamavIntegration.enabled`) |
+| [`synapse-operator`](charts/synapse-operator) | 1.6.0 | 0.1.11 | The Synapse Kubernetes operator (config-sync controller; optional ingress mode) |
 
 `synapse-stack` deploys the **dataplane twice** from the same subchart, each alias getting its
 own values tree and identity:
@@ -42,7 +42,7 @@ own values tree and identity:
 | `proxy` | `synapse-proxy` | TLS passthrough / L7 / Tier-2 terminate | `proxy.enabled` |
 | `agent` | `synapse-agent` | XDP transparent observe (edge only) | `agent.enabled` |
 
-It does **not** include the operator — install `synapse-operator` separately if you want it.
+The stack also renders the operator from its own templates (`operator.enabled`, default `true`; set `operator.ingress.enabled` for the ingress-mode Deployment). Set `operator.enabled=false` to install it separately with the `synapse-operator` chart.
 
 ---
 
@@ -70,7 +70,7 @@ Both aliases default to enabled. Turn one off with `--set agent.enabled=false`, 
 per-alias values under the alias key — `--set proxy.service.type=LoadBalancer`, not
 `--set service.type=...`.
 
-**The operator (separate release):**
+**The operator on its own (separate release):**
 
 ```bash
 helm install synapse-operator gen0sec/synapse-operator -n synapse-os --create-namespace
@@ -96,7 +96,7 @@ The chart wires these operator flags from `values.yaml`:
 | `operator.ignoreConfigMapKeys` | `--ignore-configmap-keys` | `upstreams.yaml` |
 | `operator.ignoreSecretKeys` | `--ignore-secret-keys` | _(empty)_ |
 
-> The operator binary also supports an Ingress + Gateway API mode (`--ingress-mode`); this chart does **not** enable it (config-sync mode only).
+The binary also has an Ingress + Gateway API mode. It is off by default; `operator.ingressMode=true` passes `--ingress-mode` and `operator.gatewayAPI=true` passes `--gateway-api` (and grants the matching RBAC). See [`values.yaml`](charts/synapse-operator/values.yaml) for the settings it needs.
 
 ---
 
@@ -147,10 +147,13 @@ See each chart's `values.yaml` for the full set:
 
 ## Releases
 
-Charts are published to GitHub Pages (`https://helm.gen0sec.com`) by per-chart GitHub Actions workflows ([chart-releaser](https://github.com/helm/chart-releaser-action), config in `.cr.yaml`). A workflow runs when its chart directory changes on `main`, or via manual `workflow_dispatch`:
+Charts are published to GitHub Pages (`https://helm.gen0sec.com`) by one workflow, [`release-charts.yaml`](.github/workflows/release-charts.yaml), using [chart-releaser](https://github.com/helm/chart-releaser-action) (config in `.cr.yaml`). Merging to `main` does not release anything; pushing a tag that matches `v*` does (or a manual `workflow_dispatch`).
 
-| Workflow | Triggers on |
-|---|---|
+1. Bump `version` in each changed chart's `Chart.yaml` and merge to `main`. The `Validate Charts` workflow requires the bump on every pull request that touches a chart.
+2. Push a `v*` tag on a commit that is on `main`. The workflow fails if the tagged commit is not an ancestor of `origin/main`.
+3. chart-releaser walks every chart with `skip_existing`, so it publishes only the charts whose `version` has no release yet. A chart whose version did not move is skipped, not republished.
+
+---|---|
 | `release-synapse.yaml` | `charts/synapse/**` |
 | `release-synapse-operator.yaml` | `charts/synapse-operator/**` |
 | `release-synapse-stack.yaml` | `charts/synapse-stack/**` |
