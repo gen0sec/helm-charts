@@ -3,8 +3,9 @@ name: synapse-stack
 description: Umbrella chart that installs the Synapse dataplane together with the Synapse operator
 # Release synapse-stack v0.1.5
 type: application
-# Bumped: refuse cert-manager on both aliases, and follow synapse to 0.10.1.
-version: 0.12.2
+# Bumped: pin the operator image in examples/config-sync-values.yaml to the
+# 0.1.11 the chart itself pins, instead of :latest.
+version: 0.12.3
 appVersion: "0.8.3"
 home: https://gen0sec.com
 icon: https://raw.githubusercontent.com/gen0sec/helm-charts/main/images/logo.png

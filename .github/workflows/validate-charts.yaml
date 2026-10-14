@@ -7,11 +7,15 @@ on:
   pull_request:
     paths:
       - 'charts/**'
+      - 'README.md'
+      - 'hack/**'
       - '.github/workflows/validate-charts.yaml'
   push:
     branches: [ main ]
     paths:
       - 'charts/**'
+      - 'README.md'
+      - 'hack/**'
   workflow_dispatch:
 
 concurrency:
@@ -84,6 +88,18 @@ jobs:
           done
           [ "$found" = 1 ] || echo "no example overlays found"
           exit $rc
+
+  readme-versions:
+    timeout-minutes: 5
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: README chart table matches Chart.yaml
+        run: hack/check-readme.sh
+
+      - name: shellcheck hack scripts
+        run: shellcheck hack/*.sh
 
   version-bumped:
     timeout-minutes: 15
