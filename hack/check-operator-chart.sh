@@ -25,6 +25,12 @@
 #      when true or when left unset (the default). Pod and Deployment labels
 #      keep instance in every mode, and each selector is a subset of the pod
 #      labels
+#   7. ingress.*: the ingress-mode companion Deployment (<fullname>-ingress).
+#      Off by default; name, selectors (both modes), args, ServiceAccount, image
+#      fallback, security context and /tmp mount, enabled=false, Gateway RBAC
+#      gating, the two refusals, and a comparison with the synapse-stack's
+#      operator.ingress (needs `helm dependency build charts/synapse-stack`;
+#      skipped only when that is missing and CI is unset)
 #
 # Only chart/version labels are normalised. The head render is pinned to the
 # base chart's appVersion (image.tag), so the image is NOT compared by the
@@ -564,6 +570,43 @@ else
   pass "no Gateway API RBAC without ingress.gatewayAPI"
 fi
 
+# image falls back to appVersion; the SA follows the shared helper
+if render --set ingress.enabled=true --set ingress.upstreamsOutConfigMap=a/b >"$work/ing-def.yaml" 2>"$work/ing-def.err"; then
+  d='select(.kind == "Deployment" and .metadata.name == "check-synapse-operator-ingress")'
+  want="$(yq '.image.repository' "$chart/values.yaml"):$(yq '.appVersion' "$chart/Chart.yaml")"
+  got="$(yq "$d | .spec.template.spec.containers[0].image" "$work/ing-def.yaml")"
+  if [ "$got" = "$want" ]; then pass "ingress image defaults to $want"; else fail "ingress image is '$got', want $want"; fi
+  got="$(yq "$d | .spec.template.spec.serviceAccountName" "$work/ing-def.yaml")"
+  if [ "$got" = check-synapse-operator ]; then
+    pass "ingress ServiceAccount follows the helper ($got)"
+  else
+    fail "ingress ServiceAccount is '$got', want check-synapse-operator"
+  fi
+else
+  fail "ingress with defaults: render failed: $(cat "$work/ing-def.err")"
+fi
+# the same hardening as the operator: read-only root filesystem plus /tmp
+c="$ing_dep | .spec.template.spec"
+if [ "$(yq "$c.containers[0].securityContext.readOnlyRootFilesystem" "$work/ing-true.yaml")" = true ] &&
+  [ "$(yq "$c.containers[0].volumeMounts[0].mountPath" "$work/ing-true.yaml")" = /tmp ] &&
+  [ "$(yq "$c.volumes[0] | has(\"emptyDir\")" "$work/ing-true.yaml")" = true ] &&
+  [ "$(yq "$c.securityContext.runAsNonRoot" "$work/ing-true.yaml")" = true ]; then
+  pass "ingress container is read-only with a /tmp emptyDir, pod runs non-root"
+else
+  fail "ingress container lacks readOnlyRootFilesystem, the /tmp emptyDir or the pod securityContext"
+fi
+# gates: gatewayAPI alone, and enabled=false, render nothing of it
+if render --set ingress.gatewayAPI=true >"$work/ing-gwonly.yaml" 2>&1 && ! grep -q 'gateway.networking.k8s.io' "$work/ing-gwonly.yaml"; then
+  pass "ingress.gatewayAPI without ingress.enabled renders no Gateway rule"
+else
+  fail "ingress.gatewayAPI without ingress.enabled renders (or fails to render) Gateway rules"
+fi
+if render --set enabled=false --set ingress.enabled=true --set ingress.upstreamsOutConfigMap=a/b >"$work/ing-dis.yaml" 2>&1 && ! grep -q '^kind:' "$work/ing-dis.yaml"; then
+  pass "enabled=false renders no ingress Deployment either"
+else
+  fail "enabled=false with ingress.enabled still renders objects"
+fi
+
 # 7c. the two refusals
 if render --set ingress.enabled=true >/dev/null 2>"$work/ing-nocm.err"; then
   fail "ingress.enabled without ingress.upstreamsOutConfigMap rendered"
@@ -585,6 +628,12 @@ fi
 # when they are missing and CI is unset.
 cat >"$work/stack-ing.yaml" <<'YAML'
 operator:
+  nodeSelector: {disk: ssd}
+  tolerations:
+    - key: k
+      operator: Exists
+  imagePullSecrets:
+    - name: pull
   ingress:
     enabled: true
     upstreamsOutConfigMap: ns/up
@@ -603,6 +652,12 @@ fullnameOverride: synapse-operator
 image:
   tag: "0.1.11"
 instanceLabelInSelector: false
+nodeSelector: {disk: ssd}
+tolerations:
+  - key: k
+    operator: Exists
+imagePullSecrets:
+  - name: pull
 ingress:
   enabled: true
   upstreamsOutConfigMap: ns/up
@@ -638,14 +693,19 @@ else
     '.spec.selector.matchLabels | sort_keys(.)' \
     '.spec.template.spec.serviceAccountName' \
     '.spec.template.spec.containers[0].image' \
-    '.spec.template.spec.containers[0].args' \
-    '.spec.template.spec.containers[0].resources'; do
-    a="$(yq -o=json -I=0 "$ing_dep | $q" "$s")"
-    b="$(yq -o=json -I=0 "$ing_dep | $q" "$h")"
+    '.spec.template.spec.containers[0] | del(.securityContext, .volumeMounts)' \
+    '.spec.template.spec | del(.securityContext, .volumes, .containers)'; do
+    a="$(yq -o=json -I=0 "$ing_dep | $q | sort_keys(..)" "$s")"
+    b="$(yq -o=json -I=0 "$ing_dep | $q | sort_keys(..)" "$h")"
     if [ -n "$a" ] && [ "$a" != null ] && [ "$a" = "$b" ]; then
-      pass "stack and chart agree on ingress $q: $a"
+      pass "stack and chart agree on ingress $q"
     else
       fail "ingress $q differs: stack $a, chart $b"
+    fi
+  done
+  for k in nodeSelector tolerations imagePullSecrets; do
+    if [ "$(yq "$ing_dep | .spec.template.spec | has(\"$k\")" "$h")" != true ]; then
+      fail "ingress pod spec has no $k: the fixture does not exercise it"
     fi
   done
   # the ServiceAccount the Deployment names is rendered
