@@ -4,253 +4,252 @@ global:
   namespaces:
     operator: synapse-os
 
-operator:
-  enabled: true
-  # When true, the chart renders the namespace itself. Keep off if the
-  # namespace is provisioned externally (terraform, namespaces operator,
-  # etc.) — Helm doesn't track ownership of pre-existing namespaces.
-  createNamespace: true
-  nameOverride: ""
-  fullnameOverride: ""
+enabled: true
+# When true, the chart renders the namespace itself. Keep off if the
+# namespace is provisioned externally (terraform, namespaces operator,
+# etc.) — Helm doesn't track ownership of pre-existing namespaces.
+createNamespace: true
+nameOverride: ""
+fullnameOverride: ""
 
-  image:
-    repository: ghcr.io/gen0sec/synapse-operator
-    # Empty falls back to .Chart.AppVersion, so chart bumps drive image
-    # pinning without re-editing values. Override for floating tags.
-    tag: ""
-    pullPolicy: IfNotPresent
+image:
+  repository: ghcr.io/gen0sec/synapse-operator
+  # Empty falls back to .Chart.AppVersion, so chart bumps drive image
+  # pinning without re-editing values. Override for floating tags.
+  tag: ""
+  pullPolicy: IfNotPresent
 
-  imagePullSecrets: []
-  priorityClassName: ""
+imagePullSecrets: []
+priorityClassName: ""
 
-  replicaCount: 1
-  revisionHistoryLimit: 3
-  terminationGracePeriodSeconds: 30
+replicaCount: 1
+revisionHistoryLimit: 3
+terminationGracePeriodSeconds: 30
 
-  # `RollingUpdate` with `maxUnavailable: 1` is correct for replicaCount=1
-  # too (it just means the pod gets replaced before the new one is up,
-  # which is fine for a non-traffic-serving controller).
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxSurge: 1
-      maxUnavailable: 0
+# `RollingUpdate` with `maxUnavailable: 1` is correct for replicaCount=1
+# too (it just means the pod gets replaced before the new one is up,
+# which is fine for a non-traffic-serving controller).
+strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxSurge: 1
+    maxUnavailable: 0
 
-  leaderElect: true
-  # Namespace for the shared-status Lease. Empty → falls back to
-  # $POD_NAMESPACE (the operator's own ns), which is the right default
-  # for single-cluster deploys. Set explicitly only when you need to
-  # share leases across namespaces (multi-cluster federation, etc.).
-  leaderElectionNamespace: ""
+leaderElect: true
+# Namespace for the shared-status Lease. Empty → falls back to
+# $POD_NAMESPACE (the operator's own ns), which is the right default
+# for single-cluster deploys. Set explicitly only when you need to
+# share leases across namespaces (multi-cluster federation, etc.).
+leaderElectionNamespace: ""
 
-  # controller-runtime's metrics + health-probe binds. Defaults below
-  # match the image's compiled-in defaults — exposed so deploys behind
-  # a metrics proxy or sidecar can rebind.
-  metricsBindAddress: ":8080"
-  healthProbeBindAddress: ":8081"
+# controller-runtime's metrics + health-probe binds. Defaults below
+# match the image's compiled-in defaults — exposed so deploys behind
+# a metrics proxy or sidecar can rebind.
+metricsBindAddress: ":8080"
+healthProbeBindAddress: ":8081"
 
-  # Restrict the controller to a single namespace's resources. Empty
-  # = all-namespaces (default). Set this when running multiple
-  # operators side-by-side.
-  watchNamespace: ""
+# Restrict the controller to a single namespace's resources. Empty
+# = all-namespaces (default). Set this when running multiple
+# operators side-by-side.
+watchNamespace: ""
 
-  # Set-based selector picks up both the proxy and agent workloads from
-  # the umbrella `synapse-stack` chart (each aliased to a distinct
-  # app.kubernetes.io/name). Without the set form the operator silently
-  # skips one of them on config-hash reloads.
-  labelSelector: "app.kubernetes.io/name in (synapse,synapse-proxy,synapse-agent)"
-  configHashAnnotation: "synapse.gen0sec.com/config-hash"
-  ignoreConfigMapKeys: "upstreams.yaml"
-  ignoreSecretKeys: ""
+# Set-based selector picks up both the proxy and agent workloads from
+# the umbrella `synapse-stack` chart (each aliased to a distinct
+# app.kubernetes.io/name). Without the set form the operator silently
+# skips one of them on config-hash reloads.
+labelSelector: "app.kubernetes.io/name in (synapse,synapse-proxy,synapse-agent)"
+configHashAnnotation: "synapse.gen0sec.com/config-hash"
+ignoreConfigMapKeys: "upstreams.yaml"
+ignoreSecretKeys: ""
 
-  # ----- Ingress-mode flags -----
-  # When the operator drives a central synapse-proxy from per-service
-  # Ingress objects (instead of running co-located with each proxy),
-  # set ingressMode=true. The operator then watches Ingresses with
-  # ingressClassName==ingressClass and writes the rendered upstreams
-  # into upstreamsOutConfigMap; SIGHUP signalling is skipped because
-  # there is no co-located process to signal — the proxy reloads via
-  # its own ConfigMap mount.
-  ingressMode: false
-  ingressClass: "synapse"
-  # "<namespace>/<name>" — must exist (or operator can create it via
-  # CreateOrUpdate). Required when ingressMode is true.
-  upstreamsOutConfigMap: ""
-  # Also reconcile Gateway API (GatewayClass/Gateway/HTTPRoute) into the same
-  # upstreams render. Requires the Gateway API CRDs. Drives both the
-  # --gateway-api flag and its RBAC, so the two cannot drift apart.
-  #
-  # Ingress-mode only: the operator honours this alongside --ingress-mode, so
-  # setting it without ingressMode is accepted but reconciles nothing.
-  gatewayAPI: false
-  # Resolve each Ingress backend's Service ClusterIP at render time so
-  # the proxy connects directly to the pod-Service IP instead of going
-  # through cluster DNS on every request. Avoids per-request CoreDNS
-  # latency for in-cluster destinations.
-  resolveBackendClusterIPs: false
-  # Default ON from synapse chart 0.5.0. Renders the READY pod IPs from
-  # EndpointSlices as the server list instead of a single Service address,
-  # so the proxy connects straight to pods and a replaced pod is picked up
-  # on the next render rather than after synapse's DNS-cache TTL.
-  #
-  # REQUIRES a synapse build carrying the atomic reload-publication fix.
-  # Endpoint rendering re-renders on pod churn, so a rollout that used to
-  # produce no reloads now produces one per endpoint event; against an older
-  # proxy that multiplies exposure to a reload race that can 502. If you pin
-  # image.tag to a release older than that fix, set this back to false.
-  #
-  # Also strongly prefers the config-sync sidecar. In central mode every
-  # re-render is a ConfigMap write, and without the sidecar each one waits
-  # out kubelet's mount sync (~1m) - you pay the churn without the
-  # freshness. See examples/config-sync-values.yaml.
-  #
-  # Falls back to ClusterIP/FQDN when the endpoint set is missing or empty
-  # (ExternalName, headless, scaled to zero), so a route is never blanked.
-  resolveBackendEndpoints: true
-  # Enable the UpstreamsResolver — substitutes Service FQDNs to
-  # ClusterIPs in ConfigMaps labelled
-  # `synapse.gen0sec.com/resolve-upstreams=true`.
-  upstreamsResolver: false
+# ----- Ingress-mode flags -----
+# When the operator drives a central synapse-proxy from per-service
+# Ingress objects (instead of running co-located with each proxy),
+# set ingressMode=true. The operator then watches Ingresses with
+# ingressClassName==ingressClass and writes the rendered upstreams
+# into upstreamsOutConfigMap; SIGHUP signalling is skipped because
+# there is no co-located process to signal — the proxy reloads via
+# its own ConfigMap mount.
+ingressMode: false
+ingressClass: "synapse"
+# "<namespace>/<name>" — must exist (or operator can create it via
+# CreateOrUpdate). Required when ingressMode is true.
+upstreamsOutConfigMap: ""
+# Also reconcile Gateway API (GatewayClass/Gateway/HTTPRoute) into the same
+# upstreams render. Requires the Gateway API CRDs. Drives both the
+# --gateway-api flag and its RBAC, so the two cannot drift apart.
+#
+# Ingress-mode only: the operator honours this alongside --ingress-mode, so
+# setting it without ingressMode is accepted but reconciles nothing.
+gatewayAPI: false
+# Resolve each Ingress backend's Service ClusterIP at render time so
+# the proxy connects directly to the pod-Service IP instead of going
+# through cluster DNS on every request. Avoids per-request CoreDNS
+# latency for in-cluster destinations.
+resolveBackendClusterIPs: false
+# Default ON from synapse chart 0.5.0. Renders the READY pod IPs from
+# EndpointSlices as the server list instead of a single Service address,
+# so the proxy connects straight to pods and a replaced pod is picked up
+# on the next render rather than after synapse's DNS-cache TTL.
+#
+# REQUIRES a synapse build carrying the atomic reload-publication fix.
+# Endpoint rendering re-renders on pod churn, so a rollout that used to
+# produce no reloads now produces one per endpoint event; against an older
+# proxy that multiplies exposure to a reload race that can 502. If you pin
+# image.tag to a release older than that fix, set this back to false.
+#
+# Also strongly prefers the config-sync sidecar. In central mode every
+# re-render is a ConfigMap write, and without the sidecar each one waits
+# out kubelet's mount sync (~1m) - you pay the churn without the
+# freshness. See examples/config-sync-values.yaml.
+#
+# Falls back to ClusterIP/FQDN when the endpoint set is missing or empty
+# (ExternalName, headless, scaled to zero), so a route is never blanked.
+resolveBackendEndpoints: true
+# Enable the UpstreamsResolver — substitutes Service FQDNs to
+# ClusterIPs in ConfigMaps labelled
+# `synapse.gen0sec.com/resolve-upstreams=true`.
+upstreamsResolver: false
 
-  # Enable the NetVarsResolver — fills the IDS
-  # `ids.address_vars.HOME_NET`/`EXTERNAL_NET` in agent config ConfigMaps
-  # labelled `synapse.gen0sec.com/resolve-netvars=true` from cluster Node
-  # IPs + PodCIDRs + RFC1918 supernets, so inline IDS blocking
-  # (`enforce_block`) can never ban an internal/cluster source IP. A
-  # manual HOME_NET in the config, or the
-  # `synapse.gen0sec.com/home-net` annotation, overrides auto-discovery.
-  netvarsResolver: false
+# Enable the NetVarsResolver — fills the IDS
+# `ids.address_vars.HOME_NET`/`EXTERNAL_NET` in agent config ConfigMaps
+# labelled `synapse.gen0sec.com/resolve-netvars=true` from cluster Node
+# IPs + PodCIDRs + RFC1918 supernets, so inline IDS blocking
+# (`enforce_block`) can never ban an internal/cluster source IP. A
+# manual HOME_NET in the config, or the
+# `synapse.gen0sec.com/home-net` annotation, overrides auto-discovery.
+netvarsResolver: false
 
-  # Exclude the hot-reloadable thalamus IDS fields (address_vars/enforce_block/
-  # rule_paths/port_vars/flow_timeout_secs/max_flows) from the config-hash, so a
-  # change to ONLY those does NOT roll the workload — the agent hot-reloads them
-  # in process. Other config.yaml changes still roll. Only enable once all
-  # agents run a synapse image that hot-reloads these fields (r32+).
-  idsHotReloadHashExclude: false
+# Exclude the hot-reloadable thalamus IDS fields (address_vars/enforce_block/
+# rule_paths/port_vars/flow_timeout_secs/max_flows) from the config-hash, so a
+# change to ONLY those does NOT roll the workload — the agent hot-reloads them
+# in process. Other config.yaml changes still roll. Only enable once all
+# agents run a synapse image that hot-reloads these fields (r32+).
+idsHotReloadHashExclude: false
 
-  # Stamp each workload with a hash of ONLY the labelled ConfigMaps/Secrets it
-  # references, instead of one combined hash over all namespace config. Stops an
-  # unrelated config change (e.g. agent rules) from rolling other workloads
-  # (e.g. the proxy).
-  perWorkloadConfigHash: false
+# Stamp each workload with a hash of ONLY the labelled ConfigMaps/Secrets it
+# references, instead of one combined hash over all namespace config. Stops an
+# unrelated config change (e.g. agent rules) from rolling other workloads
+# (e.g. the proxy).
+perWorkloadConfigHash: false
 
-  # Extra raw args appended to the manager invocation. Use for
-  # debug/profile flags not yet exposed individually here.
-  extraArgs: []
-  # Extra environment variables for the manager container.
-  env: []
-  # Extra volumes / volume mounts (e.g. CA bundles for the rendered
-  # upstreams ConfigMap, or a custom Lease backend cert).
-  extraVolumes: []
-  extraVolumeMounts: []
+# Extra raw args appended to the manager invocation. Use for
+# debug/profile flags not yet exposed individually here.
+extraArgs: []
+# Extra environment variables for the manager container.
+env: []
+# Extra volumes / volume mounts (e.g. CA bundles for the rendered
+# upstreams ConfigMap, or a custom Lease backend cert).
+extraVolumes: []
+extraVolumeMounts: []
 
-  ports:
-    metrics: 8080
-    healthz: 8081
+ports:
+  metrics: 8080
+  healthz: 8081
 
-  serviceAccount:
-    create: true
-    name: ""
-    # For Workload Identity / IRSA / KMS service-account binding.
-    annotations: {}
-
-  rbac:
-    create: true
-
-  resources:
-    requests:
-      cpu: 5m
-      memory: 32Mi
-    limits:
-      cpu: 200m
-      memory: 128Mi
-
-  # Security-hardened defaults. Override only when a feature gate or
-  # debug tool genuinely needs more privilege.
-  podSecurityContext:
-    runAsNonRoot: true
-    runAsUser: 65532
-    runAsGroup: 65532
-    fsGroup: 65532
-    seccompProfile:
-      type: RuntimeDefault
-
-  securityContext:
-    runAsNonRoot: true
-    runAsUser: 65532
-    runAsGroup: 65532
-    readOnlyRootFilesystem: true
-    allowPrivilegeEscalation: false
-    capabilities:
-      drop: [ALL]
-
-  livenessProbe:
-    httpGet:
-      path: /healthz
-      port: healthz
-      scheme: HTTP
-    initialDelaySeconds: 15
-    periodSeconds: 20
-    timeoutSeconds: 3
-    failureThreshold: 3
-  readinessProbe:
-    httpGet:
-      path: /readyz
-      port: healthz
-      scheme: HTTP
-    initialDelaySeconds: 5
-    periodSeconds: 10
-    timeoutSeconds: 3
-    failureThreshold: 3
-
+serviceAccount:
+  create: true
+  name: ""
+  # For Workload Identity / IRSA / KMS service-account binding.
   annotations: {}
-  podAnnotations: {}
-  podLabels: {}
 
-  nodeSelector: {}
-  tolerations: []
-  affinity: {}
-  topologySpreadConstraints: []
+rbac:
+  create: true
 
-  # ----- Metrics Service -----
-  # Stand up a ClusterIP Service in front of the metrics port so a
-  # Prometheus ServiceMonitor / scrape config can target it by name
-  # without per-pod IP discovery.
-  service:
-    enabled: true
-    type: ClusterIP
-    port: 8080
-    annotations: {}
+resources:
+  requests:
+    cpu: 5m
+    memory: 32Mi
+  limits:
+    cpu: 200m
+    memory: 128Mi
 
-  # ----- ServiceMonitor (prometheus-operator) -----
-  # Only rendered when the prometheus-operator CRDs are installed AND
-  # serviceMonitor.enabled is true. Schemaless guard keeps the chart
-  # safe to install on clusters without monitoring CRDs.
-  serviceMonitor:
-    enabled: false
-    namespace: ""           # falls back to the operator's namespace
-    interval: 30s
-    scrapeTimeout: 10s
-    labels: {}
-    relabelings: []
-    metricRelabelings: []
+# Security-hardened defaults. Override only when a feature gate or
+# debug tool genuinely needs more privilege.
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 65532
+  runAsGroup: 65532
+  fsGroup: 65532
+  seccompProfile:
+    type: RuntimeDefault
 
-  # ----- PodDisruptionBudget -----
-  # Auto-enabled when replicaCount > 1. Set explicitly to override.
-  pdb:
-    create: false
-    minAvailable: 1
-    # Or:
-    # maxUnavailable: 1
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 65532
+  runAsGroup: 65532
+  readOnlyRootFilesystem: true
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop: [ALL]
 
-  # ----- NetworkPolicy -----
-  # Off by default — most clusters don't enforce one. When on, opens
-  # ingress on the metrics + healthz ports only, and unrestricted
-  # egress (controller-runtime needs the apiserver, leader-election
-  # lease, plus DNS for the IngressReconciler's Service lookups).
-  networkPolicy:
-    enabled: false
-    # Selector for who can scrape /metrics. Defaults to "anyone in the
-    # operator's namespace"; tighten for production.
-    metricsIngress:
-      from: []
+livenessProbe:
+  httpGet:
+    path: /healthz
+    port: healthz
+    scheme: HTTP
+  initialDelaySeconds: 15
+  periodSeconds: 20
+  timeoutSeconds: 3
+  failureThreshold: 3
+readinessProbe:
+  httpGet:
+    path: /readyz
+    port: healthz
+    scheme: HTTP
+  initialDelaySeconds: 5
+  periodSeconds: 10
+  timeoutSeconds: 3
+  failureThreshold: 3
+
+annotations: {}
+podAnnotations: {}
+podLabels: {}
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+topologySpreadConstraints: []
+
+# ----- Metrics Service -----
+# Stand up a ClusterIP Service in front of the metrics port so a
+# Prometheus ServiceMonitor / scrape config can target it by name
+# without per-pod IP discovery.
+service:
+  enabled: true
+  type: ClusterIP
+  port: 8080
+  annotations: {}
+
+# ----- ServiceMonitor (prometheus-operator) -----
+# Only rendered when the prometheus-operator CRDs are installed AND
+# serviceMonitor.enabled is true. Schemaless guard keeps the chart
+# safe to install on clusters without monitoring CRDs.
+serviceMonitor:
+  enabled: false
+  namespace: ""           # falls back to the operator's namespace
+  interval: 30s
+  scrapeTimeout: 10s
+  labels: {}
+  relabelings: []
+  metricRelabelings: []
+
+# ----- PodDisruptionBudget -----
+# Auto-enabled when replicaCount > 1. Set explicitly to override.
+pdb:
+  create: false
+  minAvailable: 1
+  # Or:
+  # maxUnavailable: 1
+
+# ----- NetworkPolicy -----
+# Off by default — most clusters don't enforce one. When on, opens
+# ingress on the metrics + healthz ports only, and unrestricted
+# egress (controller-runtime needs the apiserver, leader-election
+# lease, plus DNS for the IngressReconciler's Service lookups).
+networkPolicy:
+  enabled: false
+  # Selector for who can scrape /metrics. Defaults to "anyone in the
+  # operator's namespace"; tighten for production.
+  metricsIngress:
+    from: []

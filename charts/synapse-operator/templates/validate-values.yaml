@@ -1,0 +1,11 @@
+{{- /*
+Renders nothing; exists to turn a silent no-op into an error.
+
+Before 2.0.0 every value lived under `operator:`. They now sit at the top
+level, so an old values file still installs - and quietly applies none of its
+settings, because nothing reads `.Values.operator` any more. Refuse it instead.
+`global.namespaces.operator` is a different key and is unchanged.
+*/ -}}
+{{- if kindIs "map" .Values.operator }}
+{{- fail (printf "values moved from operator.X to X in 2.0.0: drop the `operator:` level and put its keys at the top of your values (operator.image.tag -> image.tag, operator.enabled -> enabled). Found operator keys: %s. global.namespaces.operator is unchanged." (keys .Values.operator | sortAlpha | join ", ")) }}
+{{- end }}

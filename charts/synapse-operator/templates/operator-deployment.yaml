@@ -1,4 +1,4 @@
-{{- if .Values.operator.enabled }}
+{{- if .Values.enabled }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -6,15 +6,15 @@ metadata:
   namespace: {{ .Values.global.namespaces.operator }}
   labels:
     {{- include "synapse-operator.labels" . | nindent 4 }}
-  {{- with .Values.operator.annotations }}
+  {{- with .Values.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}
 spec:
-  replicas: {{ .Values.operator.replicaCount }}
+  replicas: {{ .Values.replicaCount }}
   strategy:
-    {{- toYaml .Values.operator.strategy | nindent 4 }}
-  revisionHistoryLimit: {{ .Values.operator.revisionHistoryLimit }}
+    {{- toYaml .Values.strategy | nindent 4 }}
+  revisionHistoryLimit: {{ .Values.revisionHistoryLimit }}
   selector:
     matchLabels:
       {{- include "synapse-operator.selectorLabels" . | nindent 6 }}
@@ -22,89 +22,89 @@ spec:
     metadata:
       labels:
         {{- include "synapse-operator.labels" . | nindent 8 }}
-        {{- with .Values.operator.podLabels }}
+        {{- with .Values.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
-      {{- with .Values.operator.podAnnotations }}
+      {{- with .Values.podAnnotations }}
       annotations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
     spec:
       serviceAccountName: {{ include "synapse-operator.serviceAccountName" . }}
-      {{- with .Values.operator.imagePullSecrets }}
+      {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.operator.priorityClassName }}
+      {{- with .Values.priorityClassName }}
       priorityClassName: {{ . }}
       {{- end }}
       automountServiceAccountToken: true
-      terminationGracePeriodSeconds: {{ .Values.operator.terminationGracePeriodSeconds }}
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
       securityContext:
-        {{- toYaml .Values.operator.podSecurityContext | nindent 8 }}
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
         - name: manager
-          image: "{{ .Values.operator.image.repository }}:{{ .Values.operator.image.tag | default .Chart.AppVersion }}"
-          imagePullPolicy: {{ .Values.operator.image.pullPolicy }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
           args:
-            {{- if .Values.operator.leaderElect }}
+            {{- if .Values.leaderElect }}
             - --leader-elect
             {{- end }}
-            {{- with .Values.operator.leaderElectionNamespace }}
+            {{- with .Values.leaderElectionNamespace }}
             - --leader-election-namespace={{ . }}
             {{- end }}
-            {{- if .Values.operator.metricsBindAddress }}
-            - --metrics-bind-address={{ .Values.operator.metricsBindAddress }}
+            {{- if .Values.metricsBindAddress }}
+            - --metrics-bind-address={{ .Values.metricsBindAddress }}
             {{- end }}
-            {{- if .Values.operator.healthProbeBindAddress }}
-            - --health-probe-bind-address={{ .Values.operator.healthProbeBindAddress }}
+            {{- if .Values.healthProbeBindAddress }}
+            - --health-probe-bind-address={{ .Values.healthProbeBindAddress }}
             {{- end }}
-            {{- with .Values.operator.watchNamespace }}
+            {{- with .Values.watchNamespace }}
             - --namespace={{ . }}
             {{- end }}
-            {{- if .Values.operator.labelSelector }}
-            - --label-selector={{ .Values.operator.labelSelector }}
+            {{- if .Values.labelSelector }}
+            - --label-selector={{ .Values.labelSelector }}
             {{- end }}
-            {{- if .Values.operator.configHashAnnotation }}
-            - --config-hash-annotation={{ .Values.operator.configHashAnnotation }}
+            {{- if .Values.configHashAnnotation }}
+            - --config-hash-annotation={{ .Values.configHashAnnotation }}
             {{- end }}
-            {{- if .Values.operator.ignoreConfigMapKeys }}
-            - --ignore-configmap-keys={{ .Values.operator.ignoreConfigMapKeys }}
+            {{- if .Values.ignoreConfigMapKeys }}
+            - --ignore-configmap-keys={{ .Values.ignoreConfigMapKeys }}
             {{- end }}
-            {{- if .Values.operator.ignoreSecretKeys }}
-            - --ignore-secret-keys={{ .Values.operator.ignoreSecretKeys }}
+            {{- if .Values.ignoreSecretKeys }}
+            - --ignore-secret-keys={{ .Values.ignoreSecretKeys }}
             {{- end }}
-            {{- if .Values.operator.ingressMode }}
+            {{- if .Values.ingressMode }}
             - --ingress-mode
             {{- end }}
-            {{- if .Values.operator.ingressClass }}
-            - --ingress-class={{ .Values.operator.ingressClass }}
+            {{- if .Values.ingressClass }}
+            - --ingress-class={{ .Values.ingressClass }}
             {{- end }}
-            {{- if .Values.operator.upstreamsOutConfigMap }}
-            - --upstreams-out-configmap={{ .Values.operator.upstreamsOutConfigMap }}
+            {{- if .Values.upstreamsOutConfigMap }}
+            - --upstreams-out-configmap={{ .Values.upstreamsOutConfigMap }}
             {{- end }}
-            {{- if .Values.operator.resolveBackendClusterIPs }}
+            {{- if .Values.resolveBackendClusterIPs }}
             - --resolve-backend-cluster-ips
             {{- end }}
-            {{- if .Values.operator.resolveBackendEndpoints }}
+            {{- if .Values.resolveBackendEndpoints }}
             - --resolve-backend-endpoints
             {{- end }}
-            {{- if .Values.operator.gatewayAPI }}
+            {{- if .Values.gatewayAPI }}
             - --gateway-api
             {{- end }}
-            {{- if .Values.operator.upstreamsResolver }}
+            {{- if .Values.upstreamsResolver }}
             - --upstreams-resolver
             {{- end }}
-            {{- if .Values.operator.netvarsResolver }}
+            {{- if .Values.netvarsResolver }}
             - --netvars-resolver
             {{- end }}
-            {{- if .Values.operator.idsHotReloadHashExclude }}
+            {{- if .Values.idsHotReloadHashExclude }}
             - --ids-hot-reload-hash-exclude
             {{- end }}
-            {{- if .Values.operator.perWorkloadConfigHash }}
+            {{- if .Values.perWorkloadConfigHash }}
             - --per-workload-config-hash
             {{- end }}
-            {{- with .Values.operator.extraArgs }}
+            {{- with .Values.extraArgs }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
           env:
@@ -116,28 +116,28 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.name
-            {{- with .Values.operator.env }}
+            {{- with .Values.env }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
           ports:
-            - containerPort: {{ .Values.operator.ports.metrics }}
+            - containerPort: {{ .Values.ports.metrics }}
               name: metrics
               protocol: TCP
-            - containerPort: {{ .Values.operator.ports.healthz }}
+            - containerPort: {{ .Values.ports.healthz }}
               name: healthz
               protocol: TCP
           livenessProbe:
-            {{- toYaml .Values.operator.livenessProbe | nindent 12 }}
+            {{- toYaml .Values.livenessProbe | nindent 12 }}
           readinessProbe:
-            {{- toYaml .Values.operator.readinessProbe | nindent 12 }}
+            {{- toYaml .Values.readinessProbe | nindent 12 }}
           resources:
-            {{- toYaml .Values.operator.resources | nindent 12 }}
+            {{- toYaml .Values.resources | nindent 12 }}
           securityContext:
-            {{- toYaml .Values.operator.securityContext | nindent 12 }}
+            {{- toYaml .Values.securityContext | nindent 12 }}
           volumeMounts:
             - name: tmp
               mountPath: /tmp
-            {{- with .Values.operator.extraVolumeMounts }}
+            {{- with .Values.extraVolumeMounts }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
       volumes:
@@ -146,22 +146,22 @@ spec:
         # election bootstrap). An emptyDir keeps the rootfs sealed.
         - name: tmp
           emptyDir: {}
-        {{- with .Values.operator.extraVolumes }}
+        {{- with .Values.extraVolumes }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
-      {{- with .Values.operator.nodeSelector }}
+      {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.operator.tolerations }}
+      {{- with .Values.tolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.operator.affinity }}
+      {{- with .Values.affinity }}
       affinity:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.operator.topologySpreadConstraints }}
+      {{- with .Values.topologySpreadConstraints }}
       topologySpreadConstraints:
         {{- toYaml . | nindent 8 }}
       {{- end }}
