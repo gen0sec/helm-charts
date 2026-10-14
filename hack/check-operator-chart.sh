@@ -13,6 +13,8 @@
 #   4. (any BASE) the default image is <image.repository>:<appVersion>, with no
 #      pin; checks 1 and 2 pin image.tag, so they cannot see that fallback
 #   5. a leftover operator: block fails with the migration message
+#   6. serviceAccount.create=false without serviceAccount.name fails naming
+#      serviceAccount.name, instead of binding RBAC to the default account
 #
 # Only chart/version labels are normalised. The head render is pinned to the
 # base chart's appVersion (image.tag), so the image is NOT compared by the
@@ -266,6 +268,37 @@ elif grep -q "moved from operator" "$work/legacy.err" && grep -q "2.0.0" "$work/
   pass "the render fails with the migration message"
 else
   fail "the render failed, but not with the migration message: $(cat "$work/legacy.err")"
+fi
+
+# --- 6. no ServiceAccount to use fails ----------------------------------------
+echo "==> serviceAccount.create=false without a name"
+if render --set serviceAccount.create=false >"$work/sa.out" 2>"$work/sa.err"; then
+  fail "the render succeeded with serviceAccount.create=false and no serviceAccount.name (binds to: $(yq 'select(.kind == "ClusterRoleBinding") | .subjects[].name' "$work/sa.out" | sort -u | tr '\n' ' '))"
+elif grep -q "serviceAccount.name" "$work/sa.err"; then
+  pass "the render fails naming serviceAccount.name"
+else
+  fail "the render failed, but not naming serviceAccount.name: $(cat "$work/sa.err")"
+fi
+# sa_uses OUT NAME: the pod runs as NAME, both bindings name only NAME, and no
+# ServiceAccount object is rendered.
+sa_uses() {
+  [ "$(yq 'select(.kind == "Deployment") | .spec.template.spec.serviceAccountName' "$1")" = "$2" ] &&
+    [ "$(yq 'select(.kind == "ClusterRoleBinding") | .subjects[].name' "$1" | sort -u)" = "$2" ] &&
+    [ "$(yq 'select(.kind == "RoleBinding") | .subjects[].name' "$1" | sort -u)" = "$2" ] &&
+    [ "$(yq 'select(.kind == "ServiceAccount") | .kind' "$1" | wc -l)" = 0 ]
+}
+for sa in pre-made default; do
+  if render --set serviceAccount.create=false --set "serviceAccount.name=$sa" >"$work/sa2.out" 2>"$work/sa2.err" &&
+    sa_uses "$work/sa2.out" "$sa"; then
+    pass "serviceAccount.create=false with name=$sa runs and binds as $sa, creating none"
+  else
+    fail "serviceAccount.create=false with name=$sa did not run and bind as $sa: $(cat "$work/sa2.err")"
+  fi
+done
+if render --set enabled=false --set serviceAccount.create=false >/dev/null 2>"$work/sa3.err"; then
+  pass "a disabled operator is not validated for its ServiceAccount"
+else
+  fail "enabled=false fails on the ServiceAccount check: $(cat "$work/sa3.err")"
 fi
 
 exit "$failed"
