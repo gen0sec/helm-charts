@@ -10,7 +10,9 @@
 #      BASE that still reads the old operator: layout it is wrapped back into
 #      operator: first, so the script works before and after the flattening.
 #   3. enabled=false renders nothing
-#   4. a leftover operator: block fails with the migration message
+#   4. (any BASE) the default image is <image.repository>:<appVersion>, with no
+#      pin; checks 1 and 2 pin image.tag, so they cannot see that fallback
+#   5. a leftover operator: block fails with the migration message
 #
 # Only chart/version labels are normalised. The head render is pinned to the
 # base chart's appVersion (image.tag), so the image is NOT compared by the
@@ -23,7 +25,10 @@
 # between BASE and HEAD, so the PR that changes the render carries (and
 # reviewers see) the diffs, and the next PR is held to "no change" again
 # without touching them. Otherwise the expected diff of a case is empty.
-# Regenerate one by running the script and copying the printed diff.
+# A file counts only once it is committed: the comparison with BASE is made
+# against HEAD, not the working tree. Regenerate with REGEN=1 (needs BASE),
+# which writes the actual diff of every case to that case's file; review it,
+# then commit it.
 #
 # Needs helm, yq (mikefarah, v4) and git. Run from anywhere.
 #
@@ -196,11 +201,18 @@ else
     if ! git -C "$root" diff --quiet "$BASE" HEAD -- "$file" && [ -f "$root/$file" ]; then
       cp "$root/$file" "$want"
     fi
-    if cmp -s "$work/$name.diff" "$want"; then
+    if [ "${REGEN:-}" = 1 ]; then
+      cp "$work/$name.diff" "$root/$file"
+      pass "$name: wrote $file"
+    elif cmp -s "$work/$name.diff" "$want"; then
       pass "$name renders what $BASE rendered"
     else
-      fail "$name differs from what $BASE rendered (diff, then the expected one if any):"
-      head -n 40 "$work/$name.diff" >&2
+      fail "$name differs from what $BASE rendered; actual diff (base -> head):"
+      cat "$work/$name.diff" >&2
+      if [ -s "$want" ]; then
+        echo "--- expected ($file) against actual:" >&2
+        diff -u "$want" "$work/$name.diff" >&2 || true
+      fi
     fi
   }
 
@@ -232,7 +244,21 @@ else
   fail "render failed: $(cat "$work/disabled.err")"
 fi
 
-# --- 4. the legacy operator: block fails -----------------------------------------
+# --- 4. the default image follows appVersion ----------------------------------
+echo "==> default image"
+want_image="$(yq '.image.repository' "$chart/values.yaml"):$(yq '.appVersion' "$chart/Chart.yaml")"
+if render >"$work/default.yaml" 2>"$work/default.err"; then
+  got_image="$(grep -E '^ +image: ' "$work/default.yaml" | head -n 1 | sed -E 's/^ +image: "?([^"]*)"?$/\1/')"
+  if [ "$got_image" = "$want_image" ]; then
+    pass "the default image is $want_image"
+  else
+    fail "the default image is '$got_image', want $want_image"
+  fi
+else
+  fail "render failed: $(cat "$work/default.err")"
+fi
+
+# --- 5. the legacy operator: block fails -----------------------------------------
 echo "==> legacy operator: block"
 if render --set operator.image.tag=x >/dev/null 2>"$work/legacy.err"; then
   fail "the render succeeded with operator.image.tag set"
