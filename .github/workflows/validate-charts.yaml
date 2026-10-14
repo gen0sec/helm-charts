@@ -121,6 +121,28 @@ jobs:
       - name: shellcheck hack scripts
         run: shellcheck hack/*.sh
 
+  operator-chart:
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    steps:
+      # The harness diffs the render against the base commit's chart, so it
+      # needs the history. yq (v4) and git come with the runner.
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+
+      - name: shellcheck
+        run: shellcheck hack/check-operator-chart.sh
+
+      # BASE is empty off a pull request (push, dispatch); the script then
+      # skips the comparison with the base and runs the other cases.
+      - name: Check the synapse-operator chart
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+        run: hack/check-operator-chart.sh
+
   version-bumped:
     timeout-minutes: 15
     # Releases are tag-driven and chart-releaser skips versions that already
