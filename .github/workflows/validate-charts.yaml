@@ -50,7 +50,9 @@ jobs:
           # subchart as it is on disk: built too early, the stack carries
           # synapse WITHOUT its own subcharts and every later step passes
           # against an incomplete stack.
-          first=$(grep -hoE 'file://\.\./[^"[:space:]]+' charts/*/Chart.yaml | sed 's|file://\.\./||' | sort -u | tr '\n' ' ')
+          # grep exits 1 when no chart has a file:// dependency: that is not an error;
+          # without it, pipefail would end the step there with no message.
+          first=$({ grep -hoE 'file://\.\./[^"[:space:]]+' charts/*/Chart.yaml || [ "$?" -eq 1 ]; } | sed 's|file://\.\./||' | sort -u | tr '\n' ' ')
           for name in $first; do
             helm dependency build "charts/$name"
           done
