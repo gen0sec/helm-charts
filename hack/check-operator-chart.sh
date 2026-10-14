@@ -5,16 +5,38 @@
 #
 #   1. defaults render what the chart at BASE rendered; runs only when BASE is
 #      set (CI sets it to the pull request's base)
-#   2. an overlay of the old operator.* keys, moved to the top level, renders
-#      what BASE rendered with the old keys; same BASE gate
+#   2. a rich overlay renders what BASE rendered with the same settings; same
+#      BASE gate. The fixture is written in the current (flat) layout; for a
+#      BASE that still reads the old operator: layout it is wrapped back into
+#      operator: first, so the script works before and after the flattening.
 #   3. enabled=false renders nothing
 #   4. a leftover operator: block fails with the migration message
+#
+# Only chart/version labels are normalised. The head render is pinned to the
+# base chart's appVersion (image.tag), so the image is NOT compared by the
+# defaults and overlay-name cases; an appVersion bump is not a default change.
+#
+# An INTENDED change of the default render is declared, not waived: commit
+# hack/operator-chart-defaults.diff holding the exact `diff -u --label base
+# --label head` of the normalised base and head default renders. The file is
+# honoured only when it differs between BASE and HEAD, so the PR that changes
+# the defaults carries (and reviewers see) the diff, and the next PR is held to
+# "no change" again without touching it. Otherwise the expected diff is empty.
+# Regenerate it by running the script and copying the printed diff.
 #
 # Needs helm, yq (mikefarah, v4) and git. Run from anywhere.
 #
 #   BASE   commit whose chart is the reference for checks 1 and 2, e.g.
-#          BASE=origin/main. Unset, they are skipped.
+#          BASE=origin/main. Unset, they are skipped. BASE=HEAD must always
+#          pass: it proves the script is compatible with the chart it ships in.
 set -euo pipefail
+
+for t in helm yq git; do
+  command -v "$t" >/dev/null || {
+    echo "missing $t" >&2
+    exit 2
+  }
+done
 
 BASE="${BASE:-}"
 root="$(cd "$(dirname "$0")/.." && pwd)"
@@ -37,102 +59,104 @@ render() {
 }
 
 # Chart.yaml's version legitimately differs from the base's and lands in the
-# labels; take it out before comparing. appVersion is the same on both sides,
-# so the image tag needs no pin, but its label is normalised with the version.
+# labels; take it out before comparing. The version label follows appVersion,
+# so it is normalised too.
 normalise() {
   sed -E \
     -e 's#^( *helm\.sh/chart: ).*#\1CHART#' \
     -e 's#^( *app\.kubernetes\.io/version: ).*#\1VERSION#' "$1"
 }
 
-# A rich overlay in the OLD layout (everything under operator:), as BASE reads
-# it. Check 2 derives the new layout from it by lifting operator: to the top,
-# so the two cannot disagree about which key maps to which.
-cat >"$work/old.yaml" <<'YAML'
+# A rich overlay in the current flat layout. The base side is derived from it
+# (see to_base), so the two cannot disagree about which key maps to which.
+cat >"$work/flat.yaml" <<'YAML'
 global:
   namespaces:
     operator: ns-ops
-operator:
-  fullnameOverride: ops
-  createNamespace: false
-  image:
-    repository: example.test/op
-    tag: v9.9.9
-    pullPolicy: Always
-  imagePullSecrets:
-    - name: pull
-  priorityClassName: high
-  replicaCount: 2
-  leaderElectionNamespace: lease-ns
-  watchNamespace: watched
-  labelSelector: "app in (a,b)"
-  configHashAnnotation: example.test/hash
-  ignoreConfigMapKeys: "x.yaml"
-  ignoreSecretKeys: "tls.key"
-  ingressMode: true
-  ingressClass: edge
-  upstreamsOutConfigMap: ns/upstreams
-  gatewayAPI: true
-  resolveBackendClusterIPs: true
-  resolveBackendEndpoints: false
-  upstreamsResolver: true
-  netvarsResolver: true
-  idsHotReloadHashExclude: true
-  perWorkloadConfigHash: true
-  extraArgs: ["--zap-log-level=debug"]
-  env:
-    - name: FOO
-      value: bar
-  extraVolumes:
-    - name: ca
-      emptyDir: {}
-  extraVolumeMounts:
-    - name: ca
-      mountPath: /ca
-  serviceAccount:
-    name: custom-sa
-    annotations:
-      example.test/role: r
-  resources:
-    requests: {cpu: 10m, memory: 64Mi}
-    limits: {cpu: 500m, memory: 256Mi}
-  annotations: {a: b}
-  podAnnotations: {c: d}
-  podLabels: {e: f}
-  nodeSelector: {disk: ssd}
-  tolerations:
-    - key: k
-      operator: Exists
-  service:
-    port: 9090
-    annotations: {g: h}
-  serviceMonitor:
-    enabled: true
-    namespace: monitoring
-    labels: {release: prom}
-  pdb:
-    create: true
-    maxUnavailable: 1
-  networkPolicy:
-    enabled: true
-    metricsIngress:
-      from:
-        - namespaceSelector:
-            matchLabels: {name: monitoring}
+fullnameOverride: ops
+createNamespace: false
+image:
+  repository: example.test/op
+  tag: v9.9.9
+  pullPolicy: Always
+imagePullSecrets:
+  - name: pull
+priorityClassName: high
+replicaCount: 2
+leaderElectionNamespace: lease-ns
+watchNamespace: watched
+labelSelector: "app in (a,b)"
+configHashAnnotation: example.test/hash
+ignoreConfigMapKeys: "x.yaml"
+ignoreSecretKeys: "tls.key"
+ingressMode: true
+ingressClass: edge
+upstreamsOutConfigMap: ns/upstreams
+gatewayAPI: true
+resolveBackendClusterIPs: true
+resolveBackendEndpoints: false
+upstreamsResolver: true
+netvarsResolver: true
+idsHotReloadHashExclude: true
+perWorkloadConfigHash: true
+extraArgs: ["--zap-log-level=debug"]
+env:
+  - name: FOO
+    value: bar
+extraVolumes:
+  - name: ca
+    emptyDir: {}
+extraVolumeMounts:
+  - name: ca
+    mountPath: /ca
+serviceAccount:
+  name: custom-sa
+  annotations:
+    example.test/role: r
+resources:
+  requests: {cpu: 10m, memory: 64Mi}
+  limits: {cpu: 500m, memory: 256Mi}
+annotations: {a: b}
+podAnnotations: {c: d}
+podLabels: {e: f}
+nodeSelector: {disk: ssd}
+tolerations:
+  - key: k
+    operator: Exists
+service:
+  port: 9090
+  annotations: {g: h}
+serviceMonitor:
+  enabled: true
+  namespace: monitoring
+  labels: {release: prom}
+pdb:
+  create: true
+  maxUnavailable: 1
+networkPolicy:
+  enabled: true
+  metricsIngress:
+    from:
+      - namespaceSelector:
+          matchLabels: {name: monitoring}
 YAML
-cat >"$work/old-name.yaml" <<'YAML'
+cat >"$work/flat-name.yaml" <<'YAML'
 global:
   namespaces:
     operator: synapse-os
-operator:
-  nameOverride: nm
-  rbac:
-    create: false
+nameOverride: nm
+rbac:
+  create: false
 YAML
 
-# lift FILE prints the same overlay in the new layout: operator: moved to the top.
-lift() {
-  yq '(.operator // {}) * {"global": .global}' "$1"
+# to_base FILE prints the fixture in the layout BASE reads: unchanged when BASE
+# is flat, wrapped into operator: (global stays at the top) when it is not.
+to_base() {
+  if [ "$base_legacy" = 1 ]; then
+    yq '{"global": .global, "operator": del(.global)}' "$1"
+  else
+    cat "$1"
+  fi
 }
 
 # --- 1 and 2. the same objects as the base --------------------------------------
@@ -144,35 +168,49 @@ else
   git -C "$root" archive "$BASE" charts/synapse-operator | tar -x -C "$work/base"
   base_chart="$work/base/charts/synapse-operator"
   base_app="$(yq '.appVersion' "$base_chart/Chart.yaml")"
-  head_app="$(yq '.appVersion' "$chart/Chart.yaml")"
-  if [ "$base_app" != "$head_app" ]; then
-    fail "appVersion is $head_app, BASE has $base_app; this check expects it unchanged"
+  base_legacy=0
+  [ "$(yq '.operator | tag' "$base_chart/values.yaml")" = '!!map' ] && base_legacy=1
+
+  # The expected default-render diff: see the header. Empty unless this file
+  # changed between BASE and HEAD.
+  expected="$root/hack/operator-chart-defaults.diff"
+  : >"$work/expected.diff"
+  if ! git -C "$root" diff --quiet "$BASE" HEAD -- hack/operator-chart-defaults.diff &&
+    [ -f "$expected" ]; then
+    cp "$expected" "$work/expected.diff"
   fi
 
-  # compare NAME BASE_VALUES_FILE|- HEAD_VALUES_FILE|-
+  # compare NAME FLAT_VALUES_FILE|- [HEAD_ARGS...]; the head render is pinned
+  # to the base's appVersion by the caller where the fixture sets no image.tag.
   compare() {
-    local name="$1" bv="$2" hv="$3"
+    local name="$1" fv="$2"
+    shift 2
     local bargs=() hargs=()
-    [ "$bv" = - ] || bargs=(-f "$bv")
-    [ "$hv" = - ] || hargs=(-f "$hv")
+    if [ "$fv" != - ]; then
+      to_base "$fv" >"$work/$name.basevals.yaml"
+      bargs=(-f "$work/$name.basevals.yaml")
+      hargs=(-f "$fv")
+    fi
     helm template "$release" "$base_chart" --api-versions monitoring.coreos.com/v1 "${bargs[@]}" >"$work/$name.base.yaml"
-    if ! render "${hargs[@]}" >"$work/$name.head.yaml" 2>"$work/$name.err"; then
+    if ! render "${hargs[@]}" "$@" >"$work/$name.head.yaml" 2>"$work/$name.err"; then
       fail "$name: head render failed: $(cat "$work/$name.err")"
       return
     fi
-    if diff -u <(normalise "$work/$name.base.yaml") <(normalise "$work/$name.head.yaml") >"$work/$name.diff"; then
+    diff -u --label base --label head <(normalise "$work/$name.base.yaml") <(normalise "$work/$name.head.yaml") >"$work/$name.diff" || true
+    local want="$work/none.diff"
+    : >"$want"
+    [ "$name" = defaults ] && want="$work/expected.diff"
+    if cmp -s "$work/$name.diff" "$want"; then
       pass "$name renders what $BASE rendered"
     else
-      fail "$name differs from $BASE:"
+      fail "$name differs from what $BASE rendered (diff, then the expected one if any):"
       head -n 40 "$work/$name.diff" >&2
     fi
   }
 
-  compare defaults - -
-  lift "$work/old.yaml" >"$work/new.yaml"
-  compare overlay "$work/old.yaml" "$work/new.yaml"
-  lift "$work/old-name.yaml" >"$work/new-name.yaml"
-  compare overlay-name "$work/old-name.yaml" "$work/new-name.yaml"
+  compare defaults - --set "image.tag=$base_app"
+  compare overlay "$work/flat.yaml"
+  compare overlay-name "$work/flat-name.yaml" --set "image.tag=$base_app"
 
   # The overlay must reach every template; a comparison of two renders that
   # both ignored it would pass.
@@ -189,7 +227,7 @@ fi
 # --- 3. enabled=false renders nothing ------------------------------------------
 echo "==> enabled=false"
 if render --set enabled=false >"$work/disabled.yaml" 2>"$work/disabled.err"; then
-  if [ -z "$(yq 'select(. != null)' "$work/disabled.yaml")" ]; then
+  if ! grep -q '^kind:' "$work/disabled.yaml"; then
     pass "nothing is rendered"
   else
     fail "enabled=false still renders objects"
