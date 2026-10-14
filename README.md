@@ -4,7 +4,6 @@
 
 <p align="center">
   <a href="https://github.com/gen0sec/helm-charts"><img src="https://img.shields.io/badge/License-Apache_2.0-green" alt="License - Apache 2.0"></a> &nbsp;
-  <a href="https://github.com/gen0sec/helm-charts/actions?query=branch%3Amain"><img src="https://github.com/gen0sec/helm-charts/actions/workflows/release-charts.yaml/badge.svg" alt="Release Charts"></a> &nbsp;
   <a href="https://github.com/gen0sec/helm-charts/releases"><img src="https://img.shields.io/github/release/gen0sec/helm-charts.svg?label=Release" alt="Release"></a> &nbsp;
   <a href="https://docs.gen0sec.com/"><img alt="Documentation" src="https://img.shields.io/badge/gen0sec-documentation-page?style=flat&link=https%3A%2F%2Fdocs.gen0sec.com%2F"></a> &nbsp;
   <a href="https://discord.gg/jzsW5Q6s9q"><img src="https://img.shields.io/discord/1377189913849757726?label=Discord" alt="Discord"></a> &nbsp;
@@ -22,7 +21,7 @@
 
 Helm charts for deploying the **Synapse** dataplane and its **Kubernetes operator**.
 
-> Requires **Helm 3** and a conformant **Kubernetes** cluster. Published to `https://helm.gen0sec.com`.
+> Requires **Helm 3.8+ or Helm 4** (CI runs the latest Helm 4) and a conformant **Kubernetes** cluster. Published to `https://helm.gen0sec.com`.
 
 ---
 
@@ -32,7 +31,7 @@ Helm charts for deploying the **Synapse** dataplane and its **Kubernetes operato
 |---|---|---|---|
 | [`synapse-stack`](charts/synapse-stack) | 0.12.4 | 0.8.3 | **Umbrella** — two `synapse` workloads from one release, aliased `proxy` and `agent`, plus the operator (`operator.enabled`, on by default) |
 | [`synapse`](charts/synapse) | 0.10.2 | 0.8.3 | Synapse reverse proxy / dataplane. Optional `dragonfly` (`dragonfly.enabled`) and `cert-manager` (`cert-manager.enabled`) subcharts; optional ClamAV scanning (`clamavIntegration.enabled`) |
-| [`synapse-operator`](charts/synapse-operator) | 1.6.0 | 0.1.11 | The Synapse Kubernetes operator (config-sync controller; optional ingress mode) |
+| [`synapse-operator`](charts/synapse-operator) | 1.6.0 | 0.1.11 | The Synapse Kubernetes operator (config-hash controller; optional ingress mode) |
 
 `synapse-stack` deploys the **dataplane twice** from the same subchart, each alias getting its
 own values tree and identity:
@@ -80,9 +79,9 @@ helm install synapse-operator gen0sec/synapse-operator -n synapse-os --create-na
 
 ## What the operator does
 
-The `synapse-operator` chart deploys the operator as a config-sync controller (its default mode, [source](https://github.com/gen0sec/synapse-operator)):
+The `synapse-operator` chart deploys the operator as a config-hash controller (its default mode, [source](https://github.com/gen0sec/synapse-operator)):
 
-- Watches **ConfigMaps and Secrets** matching a label selector (default `app.kubernetes.io/name=synapse`).
+- Watches **ConfigMaps and Secrets** matching a label selector (default `app.kubernetes.io/name in (synapse,synapse-proxy,synapse-agent)`).
 - Hashes their combined data and stamps the hash onto the Synapse workload under the `synapse.gen0sec.com/config-hash` annotation.
 - A changed hash bumps the pod template, so Kubernetes **rolls the pods to pick up new config** — no manual restarts.
 
@@ -107,7 +106,7 @@ The binary also has an Ingress + Gateway API mode. It is off by default; `operat
 | `service.type` | synapse | `ClusterIP` by default. Every Service port becomes a load balancer listener on `LoadBalancer` |
 | `service.exposeHealth` | synapse | `false`. The health endpoint binds loopback in the container, so publishing its port routes nowhere — see below |
 | `service.externalTrafficPolicy` | synapse | Unset (Kubernetes defaults to `Cluster`, which SNATs the client IP away). Set `Local` on a `LoadBalancer`/`NodePort` Service to preserve the real source address |
-| `clamavIntegration.enabled` | synapse | Pulls in the `clamav` subchart for content scanning |
+| `clamavIntegration.enabled` | synapse | Renders the in-chart ClamAV scanning templates (not a subchart) |
 | `operator.image.repository` / `tag` | synapse-operator | `ghcr.io/gen0sec/synapse-operator`; an empty `tag` falls back to the chart's `appVersion` |
 
 ### Configuring the dataplane
@@ -151,14 +150,9 @@ Charts are published to GitHub Pages (`https://helm.gen0sec.com`) by one workflo
 
 1. Bump `version` in each changed chart's `Chart.yaml` and merge to `main`. The `Validate Charts` workflow requires the bump on every pull request that touches a chart.
 2. Push a `v*` tag on a commit that is on `main`. The workflow fails if the tagged commit is not an ancestor of `origin/main`.
-3. chart-releaser walks every chart with `skip_existing`, so it publishes only the charts whose `version` has no release yet. A chart whose version did not move is skipped, not republished.
+3. chart-releaser packages only the charts that changed since the previous tag (the latest tag reachable from the commit before the tagged one). `skip_existing` only stops it from re-uploading a version that already has a release; it does not make it look at unchanged charts.
 
----|---|
-| `release-synapse.yaml` | `charts/synapse/**` |
-| `release-synapse-operator.yaml` | `charts/synapse-operator/**` |
-| `release-synapse-stack.yaml` | `charts/synapse-stack/**` |
-
-To cut a release, bump the chart's `version` in its `Chart.yaml` and merge to `main`.
+If a release run fails part-way, re-run the workflow for the same tag: it looks at the same range again. A new tag on a later commit that changes nothing under `charts/` finds nothing to package. To recover, land a change to the affected chart with a new `version` and tag again, or run chart-releaser (`cr package`, `cr upload`, `cr index`) by hand.
 
 ---
 
