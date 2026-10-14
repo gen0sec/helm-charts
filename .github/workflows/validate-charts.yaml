@@ -109,6 +109,13 @@ jobs:
           BASE: ${{ github.event.pull_request.base.sha }}
         run: hack/check-operator-chart.sh
 
+      # The script must also pass against the chart it ships in, so a harness
+      # that only works while the base is the old layout cannot merge.
+      - name: Check the harness against its own chart
+        env:
+          BASE: HEAD
+        run: hack/check-operator-chart.sh
+
   version-bumped:
     timeout-minutes: 15
     # Releases are tag-driven and chart-releaser skips versions that already
