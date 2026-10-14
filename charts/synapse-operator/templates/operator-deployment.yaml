@@ -104,6 +104,24 @@ spec:
             {{- if .Values.perWorkloadConfigHash }}
             - --per-workload-config-hash
             {{- end }}
+            {{- if or .Values.identityProducer.enabled .Values.edgeProducer.enabled }}
+            - --download-api-url={{ .Values.downloadAPIURL }}
+            {{- end }}
+            {{- if .Values.identityProducer.enabled }}
+            - --identity-producer
+            {{- with .Values.identityProducer.interval }}
+            - --identity-producer-interval={{ . }}
+            {{- end }}
+            {{- end }}
+            {{- if .Values.edgeProducer.enabled }}
+            - --edge-producer
+            {{- with .Values.edgeProducer.interval }}
+            - --edge-producer-interval={{ . }}
+            {{- end }}
+            {{- end }}
+            {{- with .Values.clusterId }}
+            - --cluster-id={{ . }}
+            {{- end }}
             {{- with .Values.extraArgs }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
@@ -116,6 +134,15 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.name
+            {{- if or .Values.identityProducer.enabled .Values.edgeProducer.enabled }}
+            # API key with identity:write; the producers upload to the
+            # download-api with it as a Bearer token.
+            - name: SYNAPSE_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.apiKeySecret.name }}
+                  key: {{ .Values.apiKeySecret.key }}
+            {{- end }}
             {{- with .Values.env }}
             {{- toYaml . | nindent 12 }}
             {{- end }}

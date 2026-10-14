@@ -3,7 +3,15 @@ name: synapse-operator
 description: Helm chart for the Synapse Kubernetes operator
 # Release synapse-operator v1.0.0
 type: application
-# Bumped: BREAKING. Every value moved from `operator:` to the top level
+# 2.1.0: the east-west producers, ported from the synapse-stack's operator
+# block with the same keys: identityProducer / edgeProducer {enabled,
+# interval}, downloadAPIURL, apiKeySecret {name, key}, plus clusterId
+# (--cluster-id). The SYNAPSE_API_KEY env and the pods / namespaces /
+# networkpolicies rules appear only while a producer is on, so a default
+# render is unchanged. The stack's graphProducer is not ported: the operator
+# (v0.1.11, v0.2.0) has no --graph-producer or --service-graph-url flag.
+#
+# 2.0.0, BREAKING. Every value moved from `operator:` to the top level
 # (operator.image.tag -> image.tag, operator.enabled -> enabled), so that this
 # chart can sit under `operator:` in the synapse-stack as a subchart. The
 # objects rendered are unchanged. A values file that still has an `operator:`
@@ -16,7 +24,7 @@ type: application
 #
 # Still from 1.5.1: --resolve-backend-endpoints defaults ON, which requires a
 # synapse build with the atomic reload-publication fix; see values.yaml.
-version: 2.0.0
+version: 2.1.0
 appVersion: "0.1.11"
 home: https://gen0sec.com
 icon: https://raw.githubusercontent.com/gen0sec/helm-charts/main/images/logo.png

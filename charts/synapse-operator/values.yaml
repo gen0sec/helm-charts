@@ -133,6 +133,28 @@ idsHotReloadHashExclude: false
 # (e.g. the proxy).
 perWorkloadConfigHash: false
 
+# ----- East-west producers (off by default) -----
+# Each producer uploads to the download-api and needs an API key with
+# identity:write, read from the Secret named by apiKeySecret (env
+# SYNAPSE_API_KEY, added only while a producer is on). Each drives both its
+# flag and its RBAC, so the two cannot drift apart.
+downloadAPIURL: "https://api.gen0sec.com/v1"
+apiKeySecret:
+  name: synapse-operator-api-key
+  key: SYNAPSE_API_KEY
+# Scopes this cluster's identity/edge baseline in the download-api, so several
+# clusters in one workspace do not overwrite each other. Empty = the shared
+# global path. Set the matching platform.identity.cluster on every agent.
+clusterId: ""
+# IdentityProducer: pod IP -> workload MMDB.
+identityProducer:
+  enabled: false
+  interval: "" # e.g. 60s; empty = operator default (5m)
+# EdgeProducer: NetworkPolicy -> declared-edge allow-list.
+edgeProducer:
+  enabled: false
+  interval: ""
+
 # Extra raw args appended to the manager invocation. Use for
 # debug/profile flags not yet exposed individually here.
 extraArgs: []
