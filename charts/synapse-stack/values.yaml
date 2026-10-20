@@ -102,6 +102,21 @@ operator:
   # Per-workload config-hash: only roll a workload when ITS referenced config
   # changes (not any namespace config). Avoids agent-rule changes rolling proxy.
   perWorkloadConfigHash: false
+
+  # ----- SynapseProxy (alpha, synapse.gen0sec.com/v1alpha1) -----
+  # Run SynapseProxy resources: the operator then creates the proxy's
+  # Deployment, Service and configuration itself and renders its routes and
+  # certificates from the Ingresses of the classes that name it. Needs an
+  # operator image >= 0.2.0 (set operator.image.tag until the chart's appVersion
+  # is that), the SynapseProxy CRD from this chart's crds/ directory, and the
+  # extra ClusterRole this switch adds. The operator refuses to start with
+  # --proxy-controller together with --ingress-mode.
+  proxyController:
+    enabled: false
+    # Render the SynapseProxy CRD with the chart, so `helm upgrade` keeps it
+    # current. Turn off to apply charts/*/templates/synapseproxy-crd.yaml
+    # yourself, or when the CRD already exists and is not owned by this release.
+    installCRD: true
   # Extra raw args appended to the manager invocation.
   extraArgs: []
   # ----- East-west producers (off by default) -----

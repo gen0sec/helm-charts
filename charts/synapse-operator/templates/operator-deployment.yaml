@@ -77,6 +77,9 @@ spec:
             {{- if .Values.operator.ingressMode }}
             - --ingress-mode
             {{- end }}
+            {{- if .Values.operator.proxyController.enabled }}
+            - --proxy-controller
+            {{- end }}
             {{- if .Values.operator.ingressClass }}
             - --ingress-class={{ .Values.operator.ingressClass }}
             {{- end }}

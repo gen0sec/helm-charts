@@ -36,3 +36,16 @@ Only the proxy terminates TLS, so a second copy has nothing to issue for.
 {{- if and $proxyCM $agentCM }}
 {{- fail "cert-manager is enabled on both the proxy and the agent. It is a cluster-scoped operator, so the second copy does not fail - it installs and then contends invisibly: both take the same leader-election leases in kube-system (one controller silently idles), both register webhooks over the cert-manager API group, and both reconcile the same cluster-wide CRDs. Set `agent.cert-manager.enabled: false` - the agent is an XDP DaemonSet with no TLS listener, so it has nothing to issue certificates for." }}
 {{- end }}
+
+{{- /*
+SynapseProxy support (operator.proxyController.enabled) needs an operator image
+that has --proxy-controller (>= 0.2.0); an older one exits on the unknown flag
+and CrashLoopBackOffs. A tag that is not a plain version, such as a sha- build,
+is the caller's word.
+*/ -}}
+{{- if and .Values.operator.enabled .Values.operator.proxyController.enabled }}
+{{- $opTag := .Values.operator.image.tag | toString | trimPrefix "v" }}
+{{- if and (regexMatch "^[0-9]+\\.[0-9]+\\.[0-9]+" $opTag) (semverCompare "<0.2.0" $opTag) }}
+{{- fail (printf "operator.proxyController.enabled needs a synapse-operator image >= 0.2.0, but operator.image.tag is %q." $opTag) }}
+{{- end }}
+{{- end }}

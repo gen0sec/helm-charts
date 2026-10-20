@@ -9,7 +9,7 @@ type: application
 #
 # Still from 1.5.1: --resolve-backend-endpoints defaults ON, which requires a
 # synapse build with the atomic reload-publication fix; see values.yaml.
-version: 1.6.0
+version: 1.7.0
 appVersion: "0.1.11"
 home: https://gen0sec.com
 icon: https://raw.githubusercontent.com/gen0sec/helm-charts/main/images/logo.png
