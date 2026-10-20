@@ -1,0 +1,17 @@
+{{- /*
+Renders nothing; refuses combinations the operator would reject at start-up or
+that cannot work, so `helm install` says so and not a CrashLoopBackOff.
+
+--proxy-controller (operator.proxyController.enabled) needs an operator image
+that has it (>= 0.2.0) and cannot run in the same process as --ingress-mode.
+A tag that is not a plain version, such as a sha- build, is the caller's word.
+*/ -}}
+{{- if and .Values.operator.enabled .Values.operator.proxyController.enabled }}
+{{- if .Values.operator.ingressMode }}
+{{- fail "operator.proxyController.enabled cannot be combined with operator.ingressMode: the operator refuses to start with both. Run the SynapseProxy controller in its own release, or turn ingressMode off." }}
+{{- end }}
+{{- $tag := .Values.operator.image.tag | default .Chart.AppVersion | toString | trimPrefix "v" }}
+{{- if and (regexMatch "^[0-9]+\\.[0-9]+\\.[0-9]+" $tag) (semverCompare "<0.2.0" $tag) }}
+{{- fail (printf "operator.proxyController.enabled needs a synapse-operator image >= 0.2.0, but this release would run %q. Set operator.image.tag." $tag) }}
+{{- end }}
+{{- end }}

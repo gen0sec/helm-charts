@@ -30,9 +30,9 @@ Helm charts for deploying the **Synapse** dataplane and its **Kubernetes operato
 
 | Chart | Version | App | Purpose |
 |---|---|---|---|
-| [`synapse-stack`](charts/synapse-stack) | 0.12.3 | 0.7.0 | **Umbrella** — two `synapse` workloads from one release, aliased `proxy` and `agent` |
+| [`synapse-stack`](charts/synapse-stack) | 0.13.0 | 0.7.0 | **Umbrella** — two `synapse` workloads from one release, aliased `proxy` and `agent` |
 | [`synapse`](charts/synapse) | 0.10.2 | 0.7.0 | Synapse reverse proxy / dataplane. Depends on `valkey`; optional `clamav` (`clamavIntegration.enabled`) |
-| [`synapse-operator`](charts/synapse-operator) | 1.4.2 | 0.1.8 | The Synapse Kubernetes operator (config-sync controller) |
+| [`synapse-operator`](charts/synapse-operator) | 1.7.0 | 0.1.11 | The Synapse Kubernetes operator (config-sync controller; `SynapseProxy` with `operator.proxyController.enabled`) |
 
 `synapse-stack` deploys the **dataplane twice** from the same subchart, each alias getting its
 own values tree and identity:
@@ -69,6 +69,18 @@ helm install synapse-stack gen0sec/synapse-stack -n synapse --create-namespace
 Both aliases default to enabled. Turn one off with `--set agent.enabled=false`, and set
 per-alias values under the alias key — `--set proxy.service.type=LoadBalancer`, not
 `--set service.type=...`.
+
+**`SynapseProxy` (alpha):** with `operator.proxyController.enabled=true` on `synapse-operator`
+or `synapse-stack`, the operator runs `synapse.gen0sec.com/v1alpha1` `SynapseProxy` resources: it
+creates the proxy's Deployment, Service and configuration and renders its routes and certificates
+from the Ingresses of the classes that name it. It needs an operator image **>= 0.2.0** (set
+`operator.image.tag`; the chart fails to render with an older one) and cannot be combined with
+`operator.ingressMode`. The chart renders the CRD with the release (`operator.proxyController.installCRD`,
+default true), so `helm upgrade` keeps it current; it carries `helm.sh/resource-policy: keep`, so
+`helm uninstall` leaves it and every `SynapseProxy` in place. A CRD that already exists and was not
+created by this release has to be adopted first (label it `app.kubernetes.io/managed-by=Helm` and
+annotate it `meta.helm.sh/release-name` and `meta.helm.sh/release-namespace`) or left alone with
+`installCRD=false`.
 
 **The operator (separate release):**
 

@@ -5,7 +5,7 @@ description: Umbrella chart that installs the Synapse dataplane together with th
 type: application
 # Bumped: follow synapse to 0.10.2 (its Chart.lock was out of sync with
 # Chart.yaml); both pins and this chart's lock moved with it.
-version: 0.12.3
+version: 0.13.0
 appVersion: "0.8.3"
 home: https://gen0sec.com
 icon: https://raw.githubusercontent.com/gen0sec/helm-charts/main/images/logo.png
