@@ -83,6 +83,22 @@ operator:
   # Ingress-mode only: the operator honours this alongside --ingress-mode, so
   # setting it without ingressMode is accepted but reconciles nothing.
   gatewayAPI: false
+  # Run SynapseProxy resources (operator v0.2.0+): the operator creates and
+  # owns a Synapse proxy for each one. Drives the --proxy-controller flag, its
+  # ClusterRole (the operator's own proxy-controller role, which includes
+  # write access to Secrets and Deployments in every namespace) and the CRD,
+  # so they cannot drift apart.
+  #
+  # Mutually exclusive with ingressMode: the operator refuses the pair, so the
+  # chart refuses to render it.
+  proxyController:
+    enabled: false
+    crds:
+      # Set false where another release or kubectl owns the SynapseProxy CRD.
+      install: true
+      # helm.sh/resource-policy: keep on the CRD, so uninstalling the release
+      # leaves the CRD, and with it every SynapseProxy, in place.
+      keep: true
   # Resolve each Ingress backend's Service ClusterIP at render time so
   # the proxy connects directly to the pod-Service IP instead of going
   # through cluster DNS on every request. Avoids per-request CoreDNS

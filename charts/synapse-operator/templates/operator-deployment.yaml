@@ -1,4 +1,7 @@
 {{- if .Values.operator.enabled }}
+{{- if and .Values.operator.proxyController.enabled .Values.operator.ingressMode }}
+{{- fail "operator.proxyController.enabled and operator.ingressMode are mutually exclusive: the operator refuses --proxy-controller together with --ingress-mode and would crash-loop. Run one operator for each." }}
+{{- end }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -91,6 +94,9 @@ spec:
             {{- end }}
             {{- if .Values.operator.gatewayAPI }}
             - --gateway-api
+            {{- end }}
+            {{- if .Values.operator.proxyController.enabled }}
+            - --proxy-controller
             {{- end }}
             {{- if .Values.operator.upstreamsResolver }}
             - --upstreams-resolver
