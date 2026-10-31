@@ -31,7 +31,7 @@ Helm charts for deploying the **Synapse** dataplane and its **Kubernetes operato
 |---|---|---|---|
 | [`synapse-stack`](charts/synapse-stack) | 0.12.4 | 0.8.3 | **Umbrella** — two `synapse` workloads from one release, aliased `proxy` and `agent`, plus the operator (`operator.enabled`, on by default) |
 | [`synapse`](charts/synapse) | 0.10.2 | 0.8.3 | Synapse reverse proxy / dataplane. Optional `dragonfly` (`dragonfly.enabled`) and `cert-manager` (`cert-manager.enabled`) subcharts; optional ClamAV scanning (`clamavIntegration.enabled`) |
-| [`synapse-operator`](charts/synapse-operator) | 1.6.0 | 0.1.11 | The Synapse Kubernetes operator (config-hash controller; optional ingress mode) |
+| [`synapse-operator`](charts/synapse-operator) | 2.0.0 | 0.1.11 | The Synapse Kubernetes operator (config-hash controller; optional ingress mode) |
 
 `synapse-stack` deploys the **dataplane twice** from the same subchart, each alias getting its
 own values tree and identity:
