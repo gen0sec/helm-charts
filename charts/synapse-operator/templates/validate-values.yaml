@@ -9,3 +9,11 @@ settings, because nothing reads `.Values.operator` any more. Refuse it instead.
 {{- if kindIs "map" .Values.operator }}
 {{- fail (printf "values moved from operator.X to X in 2.0.0: drop the `operator:` level and put its keys at the top of your values (operator.image.tag -> image.tag, operator.enabled -> enabled). Found operator keys: %s. global.namespaces.operator is unchanged." (keys .Values.operator | sortAlpha | join ", ")) }}
 {{- end }}
+{{- /*
+Without a ServiceAccount of its own the operator would run as the namespace's
+`default` account, and the ClusterRole (and the leader-election Role) would be
+bound to it - granting every pod that uses `default` the operator's rights.
+*/ -}}
+{{- if and .Values.enabled (not .Values.serviceAccount.create) (not .Values.serviceAccount.name) }}
+{{- fail "serviceAccount.create is not true but serviceAccount.name is empty: the operator would run as (and, with rbac.create, bind its RBAC to) the namespace's `default` ServiceAccount. Set serviceAccount.name to an existing ServiceAccount (`default` to use that one on purpose), or set serviceAccount.create=true." }}
+{{- end }}
