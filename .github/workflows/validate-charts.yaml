@@ -133,6 +133,12 @@ jobs:
       - name: Install Helm
         uses: azure/setup-helm@v4
 
+      # The check also renders synapse-stack, to compare its producers with this
+      # chart's. Its only dependency is file:// with a tracked Chart.lock, so no
+      # repositories are needed; synapse's own subcharts are not rendered here.
+      - name: Build the stack's dependencies
+        run: helm dependency build charts/synapse-stack
+
       - name: shellcheck
         run: shellcheck hack/check-operator-chart.sh
 

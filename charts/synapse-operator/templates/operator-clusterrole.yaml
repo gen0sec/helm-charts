@@ -70,4 +70,21 @@ rules:
     resources: ["gatewayclasses/status", "gateways/status", "httproutes/status"]
     verbs: ["get", "update", "patch"]
   {{- end }}
+  {{- if or .Values.identityProducer.enabled .Values.edgeProducer.enabled }}
+  # IdentityProducer builds the pod-IP -> workload MMDB from Pods; EdgeProducer
+  # resolves NetworkPolicy peers back to the workloads they select.
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch"]
+  {{- end }}
+  {{- if .Values.edgeProducer.enabled }}
+  # EdgeProducer compiles NetworkPolicy into the declared-edge allow-list, and
+  # reads Namespaces to resolve namespaceSelector peers.
+  - apiGroups: [""]
+    resources: ["namespaces"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["networkpolicies"]
+    verbs: ["get", "list", "watch"]
+  {{- end }}
 {{- end }}

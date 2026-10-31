@@ -15,6 +15,10 @@
 #   5. a leftover operator: block fails with the migration message
 #   6. serviceAccount.create=false without serviceAccount.name fails naming
 #      serviceAccount.name, instead of binding RBAC to the default account
+#   7. the identity/edge producers (args, SYNAPSE_API_KEY, RBAC) are rendered
+#      as documented and only when switched on; then, if the synapse-stack
+#      renders (its dependencies built), the same settings in the stack's
+#      operator: block give the same producer args, env and RBAC rules
 #
 # Only chart/version labels are normalised. The head render is pinned to the
 # base chart's appVersion (image.tag), so the image is NOT compared by the
@@ -299,6 +303,131 @@ if render --set enabled=false --set serviceAccount.create=false >/dev/null 2>"$w
   pass "a disabled operator is not validated for its ServiceAccount"
 else
   fail "enabled=false fails on the ServiceAccount check: $(cat "$work/sa3.err")"
+fi
+
+# --- 7. producers -------------------------------------------------------------------
+echo "==> producers"
+ARGS='select(.kind == "Deployment") | .spec.template.spec.containers[0].args[]'
+KEYENV='select(.kind == "Deployment") | .spec.template.spec.containers[0].env[] | select(.name == "SYNAPSE_API_KEY")'
+# The rules a producer adds; printed as compact JSON, one per line, in template order.
+PRULES='select(.kind == "ClusterRole") | .rules[] | [.apiGroups, .resources, .verbs] | select(.[1] | map(test("^(pods|namespaces|networkpolicies)$")) | any)'
+
+# expect NAME GOT WANT: passes when the two values are equal.
+expect() {
+  local name="$1" got="$2" want="$3"
+  if [ "$got" = "$want" ]; then
+    pass "$name"
+  else
+    fail "$name: got '$got', want '$want'"
+  fi
+}
+# producer_case NAME HELM_ARGS... : renders with the helm args and leaves the
+# output in $work/NAME.yaml; prints nothing, fails (after reporting) when the
+# render fails.
+producer_case() {
+  local name="$1"
+  shift
+  if ! render "$@" >"$work/$name.yaml" 2>"$work/$name.err"; then
+    fail "$name: render failed: $(cat "$work/$name.err")"
+    return 1
+  fi
+}
+pargs() { yq -N "$ARGS | select(test(\"producer|download-api|cluster-id\"))" "$1" | paste -sd' ' -; }
+penv() { yq -N -o=json -I=0 "$KEYENV" "$1"; }
+prules() { yq -N -o=json -I=0 "$PRULES" "$1" | paste -sd' ' -; }
+
+POD='[[""],["pods"],["get","list","watch"]]'
+NS='[[""],["namespaces"],["get","list","watch"]]'
+NP='[["networking.k8s.io"],["networkpolicies"],["get","list","watch"]]'
+KEY='{"name":"SYNAPSE_API_KEY","valueFrom":{"secretKeyRef":{"name":"synapse-operator-api-key","key":"SYNAPSE_API_KEY"}}}'
+URL='--download-api-url=https://api.gen0sec.com/v1'
+
+if producer_case producers-off; then
+  expect "producers off: no producer args" "$(pargs "$work/producers-off.yaml")" ""
+  expect "producers off: no SYNAPSE_API_KEY" "$(penv "$work/producers-off.yaml")" ""
+  expect "producers off: no producer rules" "$(prules "$work/producers-off.yaml")" ""
+fi
+if producer_case identity --set identityProducer.enabled=true; then
+  expect "identityProducer: args" "$(pargs "$work/identity.yaml")" "$URL --identity-producer"
+  expect "identityProducer: key from the secret" "$(penv "$work/identity.yaml")" "$KEY"
+  expect "identityProducer: pods rule only" "$(prules "$work/identity.yaml")" "$POD"
+fi
+if producer_case edge --set edgeProducer.enabled=true; then
+  expect "edgeProducer: args" "$(pargs "$work/edge.yaml")" "$URL --edge-producer"
+  expect "edgeProducer: key from the secret" "$(penv "$work/edge.yaml")" "$KEY"
+  expect "edgeProducer: pods, namespaces, networkpolicies" "$(prules "$work/edge.yaml")" "$POD $NS $NP"
+fi
+if producer_case both --set identityProducer.enabled=true --set edgeProducer.enabled=true \
+  --set identityProducer.interval=60s --set edgeProducer.interval=2m \
+  --set downloadAPIURL=https://dl.example.test/v1 --set clusterId=c1 \
+  --set apiKeySecret.name=my-key --set apiKeySecret.key=K; then
+  expect "both producers: args, in order" "$(pargs "$work/both.yaml")" \
+    "--download-api-url=https://dl.example.test/v1 --identity-producer --identity-producer-interval=60s --edge-producer --edge-producer-interval=2m --cluster-id=c1"
+  expect "both producers: apiKeySecret name and key" "$(penv "$work/both.yaml")" \
+    '{"name":"SYNAPSE_API_KEY","valueFrom":{"secretKeyRef":{"name":"my-key","key":"K"}}}'
+  expect "both producers: each rule once" "$(prules "$work/both.yaml")" "$POD $NS $NP"
+fi
+if producer_case cluster-id --set clusterId=c1; then
+  expect "clusterId alone: only --cluster-id, no key, no rules" \
+    "$(pargs "$work/cluster-id.yaml") |$(penv "$work/cluster-id.yaml")|$(prules "$work/cluster-id.yaml")" "--cluster-id=c1 ||"
+fi
+if producer_case rbac-off --set edgeProducer.enabled=true --set rbac.create=false; then
+  expect "rbac.create=false: no producer rules" "$(prules "$work/rbac-off.yaml")" ""
+fi
+# Position: the producer and cluster args come before extraArgs, which stay last
+# so a user can still override them. The tail is unfiltered on purpose.
+if producer_case args-order --set identityProducer.enabled=true --set clusterId=c1 \
+  --set 'extraArgs[0]=--zap-log-level=debug'; then
+  expect "extraArgs stay last, after the producer args" \
+    "$(yq -N 'select(.kind == "Deployment") | .spec.template.spec.containers[0].args[]' "$work/args-order.yaml" | tail -n 4 | paste -sd' ' -)" \
+    "$URL --identity-producer --cluster-id=c1 --zap-log-level=debug"
+fi
+# The key must come before extra env, after the operator's own POD_* variables.
+if producer_case env-order --set identityProducer.enabled=true --set 'env[0].name=FOO' --set 'env[0].value=bar'; then
+  expect "env order" "$(yq -N 'select(.kind == "Deployment") | .spec.template.spec.containers[0].env[].name' "$work/env-order.yaml" | paste -sd' ' -)" \
+    "POD_NAMESPACE POD_NAME SYNAPSE_API_KEY FOO"
+fi
+
+# The stack renders the same producer settings under operator:. Skipped when its
+# dependencies are not built.
+echo "==> producers: same as the synapse-stack"
+stack="$root/charts/synapse-stack"
+cat >"$work/producers-flat.yaml" <<'YAML'
+identityProducer: {enabled: true, interval: 90s}
+edgeProducer: {enabled: true, interval: 3m}
+downloadAPIURL: https://dl.example.test/v1
+apiKeySecret: {name: my-key, key: K}
+YAML
+yq '{"operator": .}' "$work/producers-flat.yaml" >"$work/producers-stack.yaml"
+# Only the stack's own operator objects.
+SOBJ='select((.kind == "Deployment" or .kind == "ClusterRole") and .metadata.name == "synapse-operator")'
+if ! helm template stk "$stack" -f "$work/producers-stack.yaml" >"$work/stack.yaml" 2>"$work/stack.err"; then
+  # Only an unbuilt dependency skips, and never in CI: a stack that cannot
+  # render must not make the comparison quietly disappear.
+  if [ -z "${CI:-}" ] && grep -q 'missing in charts/ directory' "$work/stack.err"; then
+    echo "skip: the stack's dependencies are not built: $(head -n 1 "$work/stack.err")"
+  else
+    fail "the stack does not render, so the producers cannot be compared with it: $(head -n 3 "$work/stack.err")"
+  fi
+else
+  helm template stk "$stack" >"$work/stack-off.yaml"
+  render -f "$work/producers-flat.yaml" >"$work/op.yaml"
+  for q in "args:$ARGS | select(test(\"producer|download-api\"))" "env:$KEYENV" "rules:$PRULES"; do
+    what="${q%%:*}"
+    q="${q#*:}"
+    s="$(yq -N -o=json -I=0 "$SOBJ | $q" "$work/stack.yaml" 2>&1)"
+    o="$(yq -N -o=json -I=0 "$q" "$work/op.yaml" 2>&1)"
+    if [ -z "$s" ]; then
+      fail "stack $what: the stack rendered no producer $what, the comparison is vacuous"
+    elif [ "$s" = "$o" ]; then
+      pass "producer $what match the stack"
+    else
+      fail "producer $what differ from the stack: stack '$s' vs chart '$o'"
+    fi
+  done
+  if [ -n "$(yq -N "$SOBJ | $ARGS | select(test(\"producer|download-api\"))" "$work/stack-off.yaml")" ]; then
+    fail "stack default renders producer args; the comparison baseline moved"
+  fi
 fi
 
 exit "$failed"
