@@ -60,7 +60,8 @@ rules:
   - apiGroups: [""]
     resources: ["events"]
     verbs: ["create", "patch", "update"]
-  {{- if .Values.gatewayAPI }}
+  {{- /* gatewayAPI is the main operator's; ingress.gatewayAPI the ingress-mode Deployment's. */}}
+  {{- if or .Values.gatewayAPI (and .Values.ingress.enabled .Values.ingress.gatewayAPI) }}
   # --gateway-api. Kept behind the value because the CRDs are not present on
   # every cluster, and an unconditional grant misleads an RBAC audit.
   - apiGroups: ["gateway.networking.k8s.io"]
