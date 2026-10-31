@@ -34,17 +34,33 @@ jobs:
 
       - name: Add repositories for dependencies
         run: |
-          helm repo add valkey https://valkey.io/valkey-helm/
+          # Keep in step with release-charts.yaml. dragonfly is OCI and needs
+          # no `repo add`; cert-manager needs jetstack.
+          helm repo add jetstack https://charts.jetstack.io
           helm repo update
 
-      # Only synapse-stack has a tracked Chart.lock. `build` happens to fall
-      # back to resolving when the lock is absent, but that is version-
-      # dependent behaviour, so fall back explicitly rather than rely on it.
+      # Strict on purpose: no `|| helm dependency update` fallback. That
+      # fallback rewrote a stale Chart.lock in place, so every later step ran
+      # against a repaired tree instead of the one being merged.
       - name: Build chart dependencies
         run: |
+          set -euo pipefail
+          # Charts that others pull in via file:// go first. The glob sorts
+          # synapse-stack before synapse, and a parent bundles its file://
+          # subchart as it is on disk: built too early, the stack carries
+          # synapse WITHOUT its own subcharts and every later step passes
+          # against an incomplete stack.
+          # grep exits 1 when no chart has a file:// dependency: that is not an error;
+          # without it, pipefail would end the step there with no message.
+          first=$({ grep -hoE 'file://\.\./[^"[:space:]]+' charts/*/Chart.yaml || [ "$?" -eq 1 ]; } | sed 's|file://\.\./||' | sort -u | tr '\n' ' ')
+          for name in $first; do
+            helm dependency build "charts/$name"
+          done
           for chart in charts/*/; do
+            name=$(basename "$chart")
             [ -f "$chart/Chart.yaml" ] || continue
-            helm dependency build "$chart" || helm dependency update "$chart"
+            case " $first" in *" $name "*) continue ;; esac
+            helm dependency build "$chart"
           done
 
       - name: helm lint
