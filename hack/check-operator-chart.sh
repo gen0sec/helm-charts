@@ -25,7 +25,7 @@
 #      when true or when left unset (the default). Pod and Deployment labels
 #      keep instance in every mode, and each selector is a subset of the pod
 #      labels
-#   7. ingress.*: the ingress-mode companion Deployment (<fullname>-ingress).
+#   9. ingress.*: the ingress-mode companion Deployment (<fullname>-ingress).
 #      Off by default; name, selectors (both modes), args, ServiceAccount, image
 #      fallback, security context and /tmp mount, enabled=false, Gateway RBAC
 #      gating, the two refusals, and a comparison with the synapse-stack's
@@ -492,7 +492,7 @@ if [ "$failed" = 0 ]; then
   pass "instanceLabelInSelector: selectors are {name, component} when false and add instance when true or unset"
 fi
 
-# --- 7. the ingress-mode Deployment ---------------------------------------------
+# --- 9. the ingress-mode Deployment ---------------------------------------------
 # The synapse-stack's operator.ingress.* as flat ingress.*: a second Deployment
 # running --ingress-mode next to the config-hash operator, on the same
 # ServiceAccount. Off by default.
@@ -501,7 +501,7 @@ ing_dep='select(.kind == "Deployment" and .metadata.name == "synapse-operator-in
 ing_set=(--set fullnameOverride=synapse-operator --set image.tag=0.1.11
   --set ingress.enabled=true --set ingress.upstreamsOutConfigMap=ns/up)
 
-# 7a. off by default: one Deployment and nothing of the ingress-mode companion
+# 9a. off by default: one Deployment and nothing of the ingress-mode companion
 if render >"$work/ing-off.yaml" 2>"$work/ing-off.err"; then
   if [ "$(yq 'select(.kind == "Deployment") | .metadata.name' "$work/ing-off.yaml" | wc -l)" = 1 ] &&
     ! grep -q 'ingress-controller' "$work/ing-off.yaml"; then
@@ -513,7 +513,7 @@ else
   fail "default render failed: $(cat "$work/ing-off.err")"
 fi
 
-# 7b. on: name, selector, labels, SA, args
+# 9b. on: name, selector, labels, SA, args
 for mode in true false; do
   if ! render "${ing_set[@]}" --set "instanceLabelInSelector=$mode" >"$work/ing-$mode.yaml" 2>"$work/ing-$mode.err"; then
     fail "ingress on, instanceLabelInSelector=$mode: render failed: $(cat "$work/ing-$mode.err")"
@@ -607,7 +607,7 @@ else
   fail "enabled=false with ingress.enabled still renders objects"
 fi
 
-# 7c. the two refusals
+# 9c. the two refusals
 if render --set ingress.enabled=true >/dev/null 2>"$work/ing-nocm.err"; then
   fail "ingress.enabled without ingress.upstreamsOutConfigMap rendered"
 elif grep -q 'ingress.upstreamsOutConfigMap' "$work/ing-nocm.err"; then
@@ -623,7 +623,7 @@ else
   fail "failed, but without naming ingress.enabled and ingressMode: $(cat "$work/ing-both.err")"
 fi
 
-# 7d. the same objects as the synapse-stack's operator.ingress. Needs the stack's
+# 9d. the same objects as the synapse-stack's operator.ingress. Needs the stack's
 # dependencies built (helm dependency build charts/synapse-stack); skipped only
 # when they are missing and CI is unset.
 cat >"$work/stack-ing.yaml" <<'YAML'
