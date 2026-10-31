@@ -303,6 +303,8 @@ if render --set enabled=false --set serviceAccount.create=false >/dev/null 2>"$w
   pass "a disabled operator is not validated for its ServiceAccount"
 else
   fail "enabled=false fails on the ServiceAccount check: $(cat "$work/sa3.err")"
+fi
+
 # --- 7. producers -------------------------------------------------------------------
 echo "==> producers"
 ARGS='select(.kind == "Deployment") | .spec.template.spec.containers[0].args[]'
