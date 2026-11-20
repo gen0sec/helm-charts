@@ -71,20 +71,13 @@ spec:
             - --edge-producer-interval={{ . }}
             {{- end }}
             {{- end }}
-            {{- if .Values.operator.graphProducer.enabled }}
-            - --graph-producer
-            - --service-graph-url={{ .Values.operator.graphProducer.serviceGraphURL }}
-            {{- with .Values.operator.graphProducer.interval }}
-            - --graph-producer-interval={{ . }}
-            {{- end }}
-            {{- end }}
             {{- with .Values.operator.extraArgs }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
-          {{- if or .Values.operator.identityProducer.enabled .Values.operator.edgeProducer.enabled .Values.operator.graphProducer.enabled }}
+          {{- if or .Values.operator.identityProducer.enabled .Values.operator.edgeProducer.enabled }}
           env:
-            # API key with identity:write — the producers PUT to download-api /
-            # service-graph-api with a Bearer token.
+            # API key with identity:write — the producers PUT to download-api
+            # with a Bearer token.
             - name: SYNAPSE_API_KEY
               valueFrom:
                 secretKeyRef:
