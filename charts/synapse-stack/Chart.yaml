@@ -5,7 +5,7 @@ description: Umbrella chart that installs the Synapse dataplane together with th
 type: application
 # Bumped: pin the operator image in examples/config-sync-values.yaml to the
 # 0.1.11 the chart itself pins, instead of :latest.
-version: 0.12.4
+version: 0.12.5
 appVersion: "0.8.3"
 home: https://gen0sec.com
 icon: https://raw.githubusercontent.com/gen0sec/helm-charts/main/images/logo.png
